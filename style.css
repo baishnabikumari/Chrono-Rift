@@ -1,0 +1,12 @@
+/*Gagalin font used this to make the UI of the game so i am using this everywhere.
+Because this font is now my universal font for everything i like this to muck now 
+
+Also the THing you see in UI is all own made no AI 0% Ai 
+Loading gagalin font*/
+@font-face {
+    font-family: 'Gagalin';
+    src: url('Gagalin-Regular.otf') format('opentype'), url('https://raw.githubusercontent.com/nemobgs/mrBurger/master/fonts/wpid-gagalin/Gagalin-Regular.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
