@@ -8,18 +8,65 @@
 </head>
 <body>
     <div class="ui-layer">
-        <!--header-->
-        <header>
-            <div class="left-group">
-                <div class="level-badge">LEVEL 01</div>
-                <button class="btn-small" onclick="toggleUI('levelOverlay')">SELECT LEVELS</button>
+            <!--header-->
+            <header>
+                <div class="left-group">
+                    <div class="level-badge">LEVEL 01</div>
+                    <button class="btn-small" onclick="toggleUI('levelOverlay')">SELECT LEVELS</button>
+                </div>
+                <div class="title-block">
+                    <h1>CHRONO RIFT</h1>
+                    <p class="subtitle">See Past And Clear Present!</p>
+                </div>
+                <button onclick="toggleUI('instructionOverlay')">HOW TO PLAY</button>
+            </header>
+        <div class="game-wrapper">
+            <canvas id="gameCanvas"></canvas>
+
+            <!--how to play button-->
+            <div id="instructionOverlay" class="overlay hidden">
+                <h2>HOW TO PLAY</h2>
+                <p>1. Here you are in <span>TWO TIMES</span> at once.</p>
+                <p>2. You can use <span> ARROWS(↑,↓,→,←).</span>You can also jump with<span>SPACE</span></p>
+                <p>3. Hit <span>E</span> near the <span>YELLOW TILE</span>.</p>
+                <p>4. Step on <span>BLUE BUTTONS</span> to stop lasers.</p>
+                <br>
+                <button onclick="toggleUI('instructionOverlay')">PLAY NOW</button>
             </div>
-            <div class="title-block">
-                <h1>CHRONO RIFT</h1>
-                <p class="subtitle">See Past And Clear Present!</p>
+            <div id="featuresOverlay" class="overlay hidden">
+                <h2>GAME FEATURES</h2>
+                <p>→ <span>DUAL REALITY</span> PAST and PRESENT</p>
+                <p>→ <span>TIME RIPPLE</span> MECHANICS</p>
+                <p>→ <span>SMOOTH</span> and BLOCK PHYSICS</p>
+                <br>
+                <button onclick="toggleUI('featuresOverlay')">CLOSE</button>
             </div>
-            <button onclick="toggleUI('instructionOverlay')">HOW TO PLAY</button>
-        </header>
+            <div id="levelOverlay" class="overlay hidden">
+                <h2>SELECT LEVELS</h2>
+                <div id="levelGrid">
+                    <!--Buttons injected via js-->
+                </div>
+                <button onclick="toggleUI('levelOverlay')">CLOSE</button>
+            </div>
+            <div id="gameEndOverlay" class="overlay hidden">
+                <h2 id="endTitle">LEVEL CLEARED!</h2>
+                <div class="overlay-buttons">
+                    <button id="nextLevelBtn" class="btn-green" onclick="nextLevel()">NEXT LEVEL</button>
+                    <button id="retryBtn" onclick="resetGame()">TRY AGAIN</button>
+                </div>
+            </div>
+        </div>
+        <footer>
+            <div class="controls-hint">
+                <span>← → Move Left & Right</span>
+                <span>SPACE for JUMP</span>
+                <span>E INTERACT(a secret PATH)</span>
+            </div>
+            <div class="button-group">
+                <button onclick="window.open('https://github.com/baishnabikumari/Chrono-Rit',_blank)">GITHUB</button>
+                <button onclick="toggleUI('featuresOverlay')">FEATURES</button>
+            </div>
+        </footer>
     </div>
 </body>
 </html>
