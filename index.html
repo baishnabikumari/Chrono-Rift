@@ -9,15 +9,17 @@
 <body>
     <div class="ui-layer">
         <!--header-->
-        <div class="left-group">
-            <div class="level-badge">LEVEL 01</div>
-            <button class="btn-small" onclick="toggleUI('')">SELECT LEVELS</button>
-        </div>
-        <div class="title-block">
-            <h1>CHRONO RIFT</h1>
-            <p class="subtitle">See Past And Clear Present!</p>
-        </div>
-        <button onclick="toggleUI('')"
+        <header>
+            <div class="left-group">
+                <div class="level-badge">LEVEL 01</div>
+                <button class="btn-small" onclick="toggleUI('levelOverlay')">SELECT LEVELS</button>
+            </div>
+            <div class="title-block">
+                <h1>CHRONO RIFT</h1>
+                <p class="subtitle">See Past And Clear Present!</p>
+            </div>
+            <button onclick="toggleUI('instructionOverlay')">HOW TO PLAY</button>
+        </header>
     </div>
 </body>
 </html>
