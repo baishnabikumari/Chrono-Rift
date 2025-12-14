@@ -10,3 +10,58 @@ Loading gagalin font*/
     font-style: normal;
 }
 
+:root{
+    --bg-dark:#0d0d0d;
+    --accent-red:#f25349;
+    --accent-dark-red:#5e1e26;
+    --accent-green:##4ade80;
+    --accent-dark-green:#1666534;
+    --text-white:#ffffff;
+    --font-main:'Gagalin', sans-serif;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    background-color:var(--bg-dark);
+    color:var(--text-white);
+    font-family:var(--font-main);
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    overflow:hidden;
+    user-select:none;
+}
+
+.ui-layer{
+    width:100%;
+    max-width:1200px;
+    height:95vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding:10px 30px;
+}
+
+header{
+    width:100%;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:15px;
+}
+
+.left-group{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:8px;
+}
+
+
+
