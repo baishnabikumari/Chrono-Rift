@@ -284,5 +284,10 @@ class Spike {
     }
 }
 class Laser {
-    constructor
+    constructor(x, y){
+        this.x = x;
+        this.y = y;
+        this.w = 10;
+        this.h = TILE_SIZE * 3;
+    }
 }
