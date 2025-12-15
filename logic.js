@@ -131,3 +131,101 @@ function drawBlock(ctx, x, y, w, h, r){
     ctx.stroke();
 }
 
+class player{
+    constructor(){
+        this.w = 36;
+        this.h = 36;
+        this.drawSize = 44;
+        this.angle = 0;
+        this.reset();
+    }
+    reset(){
+        this.x = 50;
+        this.y = 200;
+        this.vx = 0;
+        this.vy = 0;
+        this.angle = 0;
+        this.grounded = false;
+        this.dead = false;
+        isBurned = false;
+    }
+    update(){
+        if(this.dead) return;
+
+        if(victoryMode){
+            this.vx *= 0.9;
+            this.vy += GRAVITY;
+            this.y += this.vy;
+            handleCollisions(this, 'y');
+            this.angle += 0.2;
+            if(this.grounded && Math.abs(this.vy) <1 ){
+                this.vy = -8;
+                this.grounded = false;
+            }
+            return;
+        }
+        if (keys.right) this.vx += ACCEL;
+        if (keys.left) this.vx -= ACCEL;
+        this.vx *= FRICTION;
+
+        if(Math.abs(this.vx) > MAX_SPEED) this.vx = (this.vx > 0 ? 1 : -1) * MAX_SPEED;
+        if(Math.abs(this.vx) < 0.1) this.vx = 0;
+        this.x += this.vx;
+        handleCollisions(this, 'x');
+        this.angle += (this.vx * 0.15);
+
+        if(this.x < 0) {
+            this.x = 0;
+            this.vx = 0;
+        }
+        if(this.x > levelWidth - this.w){
+            this.x = levelWidth - this.w;
+            this.vx = 0;
+        }
+
+        this.vy += GRAVITY;
+        this.y += this.vy;
+        this.grounded = false;
+
+        handleCollisions(this, 'y');
+
+        if(checkHazardCollision(this)) triggerDeathSequence(false);
+        if(checkHazardCollision(this)) triggerDeathSequence(true);
+        if(this.y > canvas.Height + 600) triggerDeathSequence(false);
+        if(checkGoalCollision(this)) triggerVictorySequence();
+
+        checkButtonCollision(this);
+    }
+    jump(){
+        if(this.grounded){
+            this.vy = JUMP_FORCE;
+            this.grounded = false;
+        }
+    }
+}
+
+function handleCollisions(p, axis){
+    let allPlats = [...pastPlatforms, ...presentPlatforms];
+    let hitbox = { x: p.x + 2, y: p.y, w: p.w - 4, h: p.h };
+
+    for(let plat of allPlats){
+        if(rectIntersect(hitbox.x, hitbox.y, hitbox.w, hitbox.h, plat.x, plat.y, plat.w, plat.h)){
+            if(axis === 'x'){
+                if (p.vx > 0) p.x = plat.x - p.w;
+                else if (p.vx < 0) p.x = plat.x + plat.w;
+                p.vx = 0;
+            }
+            else if (axis === 'y'){
+                if(p.vy > 0){
+                    p.y = plat.y - p.h;
+                    p.grounded = true;
+                    p.vy = 0;
+                }
+                else if (p.vy < 0){
+                    p.y = plat.y + plat.h;
+                    p.vy = 0;
+                }
+            }
+        }
+    }
+}
