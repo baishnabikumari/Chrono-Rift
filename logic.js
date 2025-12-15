@@ -65,3 +65,69 @@ window.toggleUI = function(elementId){
     }
 };
 
+window.nextLevel = function(){
+    if(currentLevelIdx < LEVELS.length - 1){
+        currentLevelIdx++;
+        resetGame();
+    } else {
+        resetGame();
+    }
+}
+
+function updateLevelMenu(){
+    const grid = document.getElementById('levelGrid');
+    if(!grid) return;
+    grid.innerHTML = '';
+
+    LEVELS.forEach((_, idx) => {
+        const btn = document.createElement('div');
+        btn.className = 'level-btn';
+        btn.innerText = idx + 1;
+
+        if (idx > maxUnlockedLevel){
+            btn.classList.add('locked');
+            btn.innerHTML = '🔒';
+        } else {
+            btn.onclick = () => {
+                currentLevelIdx = idx;
+                resetGame();
+                toggleUI('levelsOverlay');
+            };
+        }
+        grid.appendChild(btn);
+    });
+}
+
+function resizeCanvas(){
+    const wrapper = document.querySelector('.game-wrapper');
+    if(wrapper){
+        canvas.width = wrapper.clientWidth;
+        canvas.Height = wrapper.clientHeight;
+        if(!animationId) draw();
+    }
+}
+window.addEventListener('resize', resizeCanvas);
+
+window.addEventListener('keydown', (e) => {
+    const overlays = ['instructionOverlay', 'featuresOverlay', 'levelsOverlay', 'gameEndOverlay'];
+    for(let id of overlays){
+        let el = document.getElementById(id);
+        if(el && !el.classList.contains('hidden') && id !== 'gameEndOverlay') return;
+    }
+    if(gameOver || victoryMode) return;
+    if (['ArrowRight', 'KeyD'].includes(e.code)) keys.right = true;
+    if (['ArrowLeft', 'keyA'].includes(e.code)) keys.left = false;
+    if (['ArrowUp', 'Space', 'keyW'].includes(e.code)) keys.up = false;
+});
+
+function drawBlock(ctx, x, y, w, h, r){
+    ctx.beginPath();
+    if (ctx.roundRect){
+        ctx.roundRect(x, y, w, h, r);
+    } else {
+        ctx.rect(x, y, w, h);
+    }
+    ctx.fill();
+    ctx.stroke();
+}
+
