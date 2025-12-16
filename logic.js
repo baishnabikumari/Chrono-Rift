@@ -367,3 +367,198 @@ const LEVEL_3 = [
     "333333333333.......3333........3333333333333333.................333333...........................333333333333333",
     "333333333333...................3333333333333333.................333333...........................333333333333333"
 ];
+
+const LEVELS = [LEVEL_1, LEVEL_2, LEVEL_3];
+const player = new player();
+const lever = new Lever(0, 0);
+let pastPlatforms = [];
+let presentPlatforms = [];
+let spikes = [];
+let lasers = [];
+let buttons = [];
+let goalRect = { x: 0, y: 0, w: 40, h: 40};
+
+function buildLevel(){
+    pastPlatforms = [];
+    presentPlatforms = [];
+    spikes = [];
+    lasers = [];
+    buttons = [];
+    lasersActive = true;
+
+    if(currentLevelIdx >= LEVELS.length) currentLevelIdx = 0;
+    const map = LEVELS[currentLevelIdx];
+
+    const badge = document.querySelector('.level-badge');
+    if(badge) badge.innerText = "LEVEL" + (currentLevelIdx + 1).toString().padStart(2, '0');
+
+    const rows = map.length;
+    const cols = map[0].length;
+    levelWidth = cols * TILE_SIZE;
+
+    const startY = canvas.height - (rows * TILE_SIZE) - 40;
+    const startX = 50;
+
+    for(let r = 0; r < rows; r++){
+        for(let c = 0; c < cols; c++){
+            let char = map[r][c];
+            let px = startX + c * TILE_SIZE;
+            let py = startY + r * TILE_SIZE;
+
+            if (char === '1') pastPlatforms.push({x: px, y: py, w: TILE_SIZE, h: TILE_SIZE});
+            if (char === '2') presentPlatforms.push({x: px, y: py, w: TILE_SIZE, h: TILE_SIZE});
+            if (char === '3'){
+                pastPlatforms.push({x: px, y: py, w: TILE_SIZE, h: TILE_SIZE});
+                presentPlatforms.push({x: px, y: py, w: TILE_SIZE, h: TILE_SIZE});
+            }
+            if (char === 'S') {
+                player.x = px;
+                player.y = py - 50;
+            }
+            if(char === 'L'){
+                lever.x = px;
+                lever.y = py + TILE_SIZE;
+                pastPlatforms.push({x: px, y: py + TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE});
+            }
+            if (char === '^') {
+                spikes.push(new Spike(px, py));
+                presentPlatforms.push({x: px, y: py + TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE});
+            }
+            if(char === 'G') goalRect = {x: px, y: py, w: 40, h: 40};
+            if(char === '|'){
+                lasers.push(new Laser(px, py - TILE_SIZE * 2));
+                presentPlatforms.push({x: py, y: py + TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE});
+            }
+            if(char === 'B'){
+                buttons.push(new TimeButton(px, py + TILE_SIZE - 10));
+                pastPlatforms.push({x: px, y: py + TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE});
+            }
+        }
+    }
+}
+
+//logic
+function checkHazardCollision(p){
+    const pHitbox = {x: p.x + 4, y: p.y + 4, w: p.w - 8, h: p.h - 8};
+    for (let s of spikes){
+        const sHitbox = { x: s.x + 8, y: s.y + 8, w: s.w - 16, h: s.h - 8};
+        if(rectIntersect(pHitbox.x, pHitbox.y, pHitbox.w, pHitbox.h, sHitbox.x, sHitbox.y, sHitbox.w, sHitbox.h)) return true;
+    }
+    return false;
+}
+
+function checkLaserCollision(p){
+    if(!lasersActive) return false;
+    const pHitbox = {x: p.x + 8, y: p.y + 8, w: p.w - 16, h: p.h - 16};
+    for(let l of lasers){
+        const lHitbox = {x: l.x + TILE_SIZE/2 - 5, y: l.y, w: 10, h: l.h};
+        if(rectIntersect(pHitbox.x, pHitbox.y, pHitbox.w, pHitbox.h, lHitbox.x, lHitbox.y, lHitbox.w, lHitbox.h)) return true;
+    }
+    return false;
+}
+
+function checkButtonCollision(p){
+    const footX = p.x + p.w / 2;
+    const footY = p.y + p.h;
+
+    for(let b of buttons){
+        if(!b.pressed && footX > b.x && footX < b.x + b.w && Math.abs(footY - b.y) < 10){
+            b.pressed = true;
+            lasersActive = false;
+            laserTimer = 300;
+        }
+    }
+}
+
+function checkGoalCollision(p){
+    return rectIntersect(p.x, p.y, p.w, p.h, goalRect.x, goalRect.y, goalRect.w, goalRect.h);
+}
+
+function rectIntersect(x1,y1,w1,h1,x2,y2,w2,h2){
+    return x2 < x1 + w1 && x2 + w2 > x1 && y2 < y1 + h1 && y2 + h2 > y1;
+}
+
+function attemptInteract(){
+    const dist = Math.hypot(player.x - lever.x, player.y - lever.y);
+    if(dist < 80 && !lever.active){
+        lever.active = true;
+        rippleEvents.push({
+            timer: 45,
+            execute: () => {
+                const bridgeY = lever.y + TILE_SIZE;
+                const bridgeStartX = lever.x + 150;
+                for(let i=0; i<30; i++){
+                    presentPlatforms.push({x: bridgeStartX + (i * TILE_SIZE), y: bridgeY, w: TILE_SIZE, h: TILE_SIZE});
+                }
+            }
+        });
+    }
+}
+
+function triggerDeathSequence(burned){
+    if(gameOver) return;
+    gameOver = true;
+    player.dead = true;
+    deathShake = 20;
+    isBurned = burned;
+    deathSound.currentTime = 0;
+    deathSound.play().catch(e => console.log("Sound error:", e));
+
+    setTimeout(() => {
+        showOverlay(false);
+    }, 500);
+}
+
+function triggerVictorySequence(){
+    if(gameOver || victoryMode) return;
+    victoryMode = true;
+
+    if(currentLevelIdx === maxUnlockedLevel && currentLevelIdx < LEVELS.length - 1){
+        maxUnlockedLevel++;
+        localStorage.setItem('chrono_unlocked', maxUnlockedLevel);
+    }
+    setTimeout(() => {
+        gameOver = true;
+        showOverlay(true);
+    }, 1500);
+}
+
+function showOverlay(win){
+    const overlay = document.getElementById('gameEndOverlay');
+    overlay.style.backgroundColor = "rgba(0,0,0,0.7)";
+    const title = document.getElementById('endTitle');
+    const nextBtn = document.getElementById('nextLevelBtn');
+    const retryBtn = document.getElementById('retryBtn');
+
+    overlay.classList.remove('hidden');
+
+    if(win){
+        title.innerText = "LEVEL CLEARED!";
+        title.style.color = '#4ade80';
+
+        if(currentLevelIdx < LEVELS.length - 1){
+            nextBtn.style.display = 'block';
+            retryBtn.style.display = 'none';
+        } else {
+            nextBtn.style.display = 'none';
+            retryBtn.innerText = "PLAY AGAIN";
+            retryBtn.style.display = 'block';
+            title.innerText = "ALL LEVELS COMPLETED!"
+        }
+    } else {
+        title.innerText = "LOST IN TIME";
+        title.style.color = '#f25349';
+        nextBtn.style.display = 'none';
+        retryBtn.innerText = "TRY AGAIN";
+        retryBtn.style.display = 'block';
+    }
+}
+
+function draw(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const viewWidth = canvas.width / 2;
+    let pCenterX = (player.x || 0) + (player.w || 30)/2;
+    let targetCamX = pCenterX - viewWidth / 2;
+    const maxCamX = Math.max(0, levelWidth - viewWidth + 100);
+    cameraX = Math.max(0, Math.min(targetCamX, maxCamX));
+}
