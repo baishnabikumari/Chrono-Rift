@@ -13,7 +13,7 @@ const playerImg = new Image();
 playerImg.src = 'assets/Ball1.png';
 
 const deathSound = new Audio('assets/LostInTime.mp3');
-deathSound.volume = 1;
+deathSound.volume = 0.5;
 
 // game physics
 const GRAVITY = 0.55;
@@ -35,6 +35,7 @@ const COLORS = {
     leverActive: '#4ade80',
     spike: '#ff0000',
     goal: '#10b981',
+    laser: '#ff0055',
     laserOff: '#550011',
     button: '#00ffff',
     buttonActive: '#008888',
@@ -44,11 +45,11 @@ let animationId;
 let currentLevelIdx = 0;
 let maxUnlockedLevel = parseInt(localStorage.getItem('chrono_unlocked')) || 0;
 let gameOver = false;
-let victoryMode = 0;
+let victoryMode = false;
 let rippleEvents = [];
 let cameraX = 0;
 let levelWidth = 0;
-let lesersActive = true;
+let lasersActive = true;
 let laserTimer = 0;
 let isBurned = false;
 
@@ -102,7 +103,7 @@ function resizeCanvas() {
     const wrapper = document.querySelector('.game-wrapper');
     if (wrapper) {
         canvas.width = wrapper.clientWidth;
-        canvas.Height = wrapper.clientHeight;
+        canvas.height = wrapper.clientHeight;
         if (!animationId) draw();
     }
 }
@@ -116,8 +117,17 @@ window.addEventListener('keydown', (e) => {
     }
     if (gameOver || victoryMode) return;
     if (['ArrowRight', 'KeyD'].includes(e.code)) keys.right = true;
-    if (['ArrowLeft', 'keyA'].includes(e.code)) keys.left = false;
-    if (['ArrowUp', 'Space', 'keyW'].includes(e.code)) keys.up = false;
+    if (['ArrowLeft', 'keyA'].includes(e.code)) keys.left = true;
+    if (['ArrowUp', 'Space', 'keyW'].includes(e.code)){
+        if(!keys.up && player.grounded) player.jump();
+        keys.up = true;
+    }
+    if(e.code === 'keyE') attemptInteract();
+});
+window.addEventListener('keyup', (e) => {
+    if(['ArrowRight', 'keyD'].includes(e.code)) keys.right = false;
+    if(['ArrowLeft', 'keyA'].includes(e.code)) keys.left = false;
+    if(['ArrowUp', 'Space', 'keyW'].includes(e.code)) keys.up = false;
 });
 
 function drawBlock(ctx, x, y, w, h, r) {
@@ -190,8 +200,8 @@ class player {
         handleCollisions(this, 'y');
 
         if (checkHazardCollision(this)) triggerDeathSequence(false);
-        if (checkHazardCollision(this)) triggerDeathSequence(true);
-        if (this.y > canvas.Height + 600) triggerDeathSequence(false);
+        if (checkLaserCollision(this)) triggerDeathSequence(true);
+        if (this.y > canvas.height + 600) triggerDeathSequence(false);
         if (checkGoalCollision(this)) triggerVictorySequence();
 
         checkButtonCollision(this);
@@ -275,7 +285,7 @@ class Spike {
         ctx.save();
         ctx.globalAlpha = 0.3;
         ctx.filter = 'brightness(1.2)';
-        if (spikeImg.complete && spikeImg.naturalWidth !== 0) ctx, drawImage(spikeImg, renderX, this.y + floatY, this.w, this.h);
+        if (spikeImg.complete && spikeImg.naturalWidth !== 0) ctx.drawImage(spikeImg, renderX, this.y + floatY, this.w, this.h);
         else {
             ctx.fillStyle = 'rgba(255,0,0,0.3)';
             ctx.fillRect(renderX, this.y + floatY, this.w, this.h);
@@ -369,7 +379,7 @@ const LEVEL_3 = [
 ];
 
 const LEVELS = [LEVEL_1, LEVEL_2, LEVEL_3];
-const player = new player();
+const player = new Player();
 const lever = new Lever(0, 0);
 let pastPlatforms = [];
 let presentPlatforms = [];
@@ -561,4 +571,155 @@ function draw(){
     let targetCamX = pCenterX - viewWidth / 2;
     const maxCamX = Math.max(0, levelWidth - viewWidth + 100);
     cameraX = Math.max(0, Math.min(targetCamX, maxCamX));
+
+    //shaking of sreen
+    let shakeX = 0;
+    let shakeY = 0;
+    if(deathShake > 0){
+        shakeX = (Math.random() - 0.5) * deathShake;
+        shakeY = (Math.random() - 0.5) * deathShake;
+        deathShake *= 0.9;
+        if(deathShake < 1) deathShake = 0;
+    }
+    ctx.save();
+    ctx.translate(shakeX, shakeY);
+    ctx.save();
+    ctx.rect(0,0,viewWidth,canvas.height);
+    ctx.clip();
+
+    ctx.fillStyle = COLORS.pastBg;
+    ctx.fillRect(0,0,viewWidth,canvas.height);
+    drawGrid(0);
+
+    ctx.fillStyle = COLORS.pastPlat;
+    ctx.strokeStyle = COLORS.pastBorder;
+    ctx.lineWidth = 2;
+    pastPlatforms.forEach(p => {
+        let rx = p.x - cameraX;
+        if(rx > -50 && rx < viewWidth) drawBlock(ctx, rx, p.y, p.w, p.h, CORNER_RADIUS);
+    });
+    buttons.forEach(b => b.draw(ctx, b.x - cameraX));
+    spikes.forEach(s => s.drawGhost(ctx, s.x - cameraX));
+    ctx.fillStyle = 'rgba(255,0,85,0.2)';
+    lasers.forEach(l => ctx.fillRect(l.x - cameraX + TILE_SIZE/2 - 1, l.y, 2, l.h));
+
+    lever.draw(ctx, lever.x - cameraX);
+    drawPlayer(ctx, player.x - cameraX, player.y, 1);
+
+    ctx.restore();
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(viewWidth, 0, viewWidth, canvas.height);
+    ctx.clip();
+    drawGrid(viewWidth);
+    ctx.fillStyle = COLORS.presentPlat;
+    ctx.strokeStyle = COLORS.presentBorder;
+    ctx.lineWidth = 2;
+    presentPlatforms.forEach(p => {
+        let rx = p.x - cameraX + viewWidth;
+        if(rx > viewWidth - 50 && rx < canvas.width) drawBlock(ctx, rx, p.y, p.w, p.h, CORNER_RADIUS);
+    });
+    spikes.forEach(s => s.draw(ctx, s.x - cameraX + viewWidth));
+    lasers.forEach(l => l.draw(ctx, l.x - cameraX + viewWidth));
+
+    drawPlayer(ctx, player.x - cameraX + viewWidth, player.y, 0.5);
+
+    let goalRX = goalRect.x - cameraX + viewWidth;
+    if(goalRX > viewWidth - 50){
+        if(goalImg.complete && goalImg.naturalWidth !== 0) ctx.drawImage(goalImg, goalRX, goalRect.y, goalRect.w, goalRect.h);
+        else { ctx.fillStyle = COLORS.goal; ctx.fillRect(goalRX, goalRect.y, goalRect.w, goalRect.h); }
+    }
+    if(rippleEvents.length > 0){
+        ctx.fillStyle = '#fff'; ctx.font = '30px "Gagalin"'; ctx.fillText("REALITY SHIFTING...", viewWidth + 40, 80);
+    }
+    if(laserTimer > 0){
+        ctx.fillStyle = '#00ffff'; ctx.font = '25px "Gagalin"';
+        ctx.fillText("LASER OFF: " + Math.ceil(laserTimer/60), viewWidth + 40, 120);
+    }
+    ctx.restore();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(viewWidth, 0); ctx.lineTo(viewWidth, canvas.height); ctx.stroke();
+    ctx.restore();
 }
+
+function drawPlayer(ctx, x, y, alpha){
+    ctx.save();
+    let cx = x + player.w/2;
+    let cy = y + player.h/2;
+    ctx.translate(cx, cy);
+    ctx.rotate(player.angle);
+    ctx.globalAlpha = alpha;
+
+    if(isBurned && alpha === 1){
+        ctx.shadowColor = 'orange'; ctx.shadowBlur = 20;
+        ctx.fillStyle = '#222';
+        ctx.beginPath(); ctx.arc(0,0,player.w/2, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = 'orange'; ctx.lineWidth = 3; ctx.stroke();
+    } else {
+        let drawOffset = (player.drawSize - player.h) / 2;
+        if(playerImg.complete && playerImg.naturalWidth !== 0){
+            ctx.drawImage(playerImg, -player.drawSize/2, -player.drawSize/2 - drawOffset/2, player.drawSize, player.drawSize);
+        } else {
+            ctx.fillStyle = COLORS.player;
+            ctx.beginPath(); ctx.arc(0, 0, player.w/2, 0 , Math.PI*2); ctx.fill();
+        }
+    }
+    ctx.restore();
+}
+
+function drawGrid(offsetX){
+    ctx.strokeStyle = 'rgba(255,255,255,0.05'; ctx.lineWidth = 1;
+    let gridShift = -(cameraX % TILE_SIZE);
+    for(let x = gridShift; x < canvas.width/2; x += TILE_SIZE){
+        ctx.beginPath(); ctx.moveTo(x + offsetX, 0); ctx.lineTo(x + offsetX, canvas.height); ctx.stroke();
+    }
+    for(let y = 0; y < canvas.height; y += TILE_SIZE){
+        ctx.beginPath(); ctx.moveTo(offsetX, y); ctx.lineTo(offsetX + canvas.width/2, y); ctx.stroke();
+    }
+}
+
+function update(){
+    if(gameOver && deathShake <= 0) return;
+
+    if(laserTimer > 0){
+        laserTimer--;
+        if(laserTimer <= 0){
+            lasersActive = true;
+            buttons.forEach(b => b.pressed = false);
+        }
+    }
+    player.update();
+    for(let i = rippleEvents.length - 1; i >= 0; i--){
+        rippleEvents[i].timer--;
+        if(rippleEvents[i].timer <= 0){
+            rippleEvents[i].execute();
+            rippleEvents.splice(i, 1);
+        }
+    }
+}
+
+function loop(){
+    update();
+    draw();
+    animationId = requestAnimationFrame(loop);
+}
+
+function resetGame(){
+    if(animationId) cancelAnimationFrame(animationId);
+    keys = { right: false, left: false, up: false};
+    player.reset();
+    lever.active = false;
+    victoryMode = false;
+    deathShake = 0;
+    rippleEvents = [];
+    buildLevel();
+    document.getElementById('gameEndOverlay').classList.add('hidden');
+    loop();
+}
+
+//init
+resizeCanvas();
+setTimeout(() => {
+    buildLevel();
+    loop();
+}, 100);
