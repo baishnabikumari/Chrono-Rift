@@ -35,8 +35,9 @@ const COLORS = {
     leverActive: '#4ade80',
     spike: '#ff0000',
     goal: '#10b981',
-    laser: '#ff0055',
-    laserOff: '#550011',
+    laser: '#ff0000',
+    laserCore: '#550000',
+    laserOff: '#220000',
     button: '#00ffff',
     buttonActive: '#008888',
 }
@@ -316,12 +317,15 @@ class Laser {
         if(lasersActive){
             ctx.fillStyle = COLORS.laser;
             ctx.shadowColor = COLORS.laser;
-            ctx.shadowBlur = 20;
-            const pulse = Math.sin(Date.now() / 100) * 2;
-            ctx.fillRect(renderX + (TILE_SIZE/2 - 5) - pulse/2, this.y, this.w + pulse, this.h);
+            ctx.shadowBlur = 30;
+            const pulse = Math.sin(Date.now() / 100) * 3;
+            ctx.fillRect(renderX + (TILE_SIZE/2 - 6) - pulse/2, this.y, 12 + pulse, this.h);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = COLORS.laserCore;
+            ctx.fillRect(renderX + (TILE_SIZE/2 - 3), this.y, 6, this.h);
         } else {
             ctx.fillStyle = COLORS.laserOff;
-            ctx.fillRect(renderX + (TILE_SIZE/2 - 2), this.y, 4, this.h);
+            ctx.fillRect(renderX + (TILE_SIZE/2 - 1), this.y, 4, this.h);
         }
         ctx.restore();
     }
@@ -380,7 +384,7 @@ const LEVEL_3 = [
     ".....................................................3........................3.................................",
     "......................................L.............3..............B............................................",
     "......................................33........................33333........33...333...........................",
-    "...................................|..33..|......33..........33.33333.........3.................................",
+    "...................................|..33..|......33..........33...............3.................................",
     "...............333....33.......333333333333.....................33333.........3.................................",
     "...............3...3...........333333333333.....................33333.........3.................................",
     "S.....................3........3333333333333333.................33333.....................333............|...G..",
@@ -563,7 +567,7 @@ function showOverlay(win){
             nextBtn.style.display = 'none';
             retryBtn.innerText = "PLAY AGAIN";
             retryBtn.style.display = 'block';
-            title.innerText = "More levels comming soon...!"
+            title.innerText = "More levels SOON...!"
         }
     } else {
         title.innerText = "LOST IN TIME";
@@ -610,9 +614,22 @@ function draw(){
     });
     buttons.forEach(b => b.draw(ctx, b.x - cameraX));
     spikes.forEach(s => s.drawGhost(ctx, s.x - cameraX));
-    ctx.fillStyle = 'rgba(255,0,85,0.2)';
-    lasers.forEach(l => ctx.fillRect(l.x - cameraX + TILE_SIZE/2 - 1, l.y, 2, l.h));
+    lasers.forEach(l => {
+        let renderX = l.x - cameraX;
+        if(renderX > -50 && renderX < viewWidth){
+            ctx.save();
+            ctx.shadowBlur = '#ff0000'
+            ctx.shadowBlur = 15;
 
+            ctx.fillStyle = 'rgba(60,0,0,0.7)'
+            ctx.fillRect(renderX + (TILE_SIZE/2 - 4), l.y, 8, l.h);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(renderX + (TILE_SIZE/2 - 1), l.y, 2, l.h);
+
+            ctx.restore();
+        }
+    });
     lever.draw(ctx, lever.x - cameraX);
     drawPlayer(ctx, player.x - cameraX, player.y, 1);
 
