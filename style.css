@@ -14,8 +14,8 @@ Loading gagalin font*/
     --bg-dark: #0d0d0d;
     --accent-red: #f25349;
     --accent-dark-red: #5e1e26;
-    --accent-green: ##4ade80;
-    --accent-dark-green: #1666534;
+    --accent-green: #4ade80;
+    --accent-dark-green: #166534;
     --text-white: #ffffff;
     --font-main: 'Gagalin', sans-serif;
 }
@@ -104,7 +104,7 @@ h1 {
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.7);
     overflow: hidden;
     background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-    background: 40px 40px;
+    background-size: 40px 40px;
 }
 
 canvas {
@@ -230,12 +230,12 @@ button {
     box-shadow: 0 4px 0 var(--accent-dark-red);
 }
 
-.button:active {
+button:active {
     transform: translateY(4px);
     box-shadow: 0 2px 0 var(--accent-dark-red);
 }
 
-.button:hover {
+button:hover {
     filter: brightness(1.1);
 }
 

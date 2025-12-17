@@ -117,17 +117,17 @@ window.addEventListener('keydown', (e) => {
     }
     if (gameOver || victoryMode) return;
     if (['ArrowRight', 'KeyD'].includes(e.code)) keys.right = true;
-    if (['ArrowLeft', 'keyA'].includes(e.code)) keys.left = true;
-    if (['ArrowUp', 'Space', 'keyW'].includes(e.code)){
+    if (['ArrowLeft', 'KeyA'].includes(e.code)) keys.left = true;
+    if (['ArrowUp', 'Space', 'KeyW'].includes(e.code)){
         if(!keys.up && player.grounded) player.jump();
         keys.up = true;
     }
-    if(e.code === 'keyE') attemptInteract();
+    if(e.code === 'KeyE') attemptInteract();
 });
 window.addEventListener('keyup', (e) => {
-    if(['ArrowRight', 'keyD'].includes(e.code)) keys.right = false;
-    if(['ArrowLeft', 'keyA'].includes(e.code)) keys.left = false;
-    if(['ArrowUp', 'Space', 'keyW'].includes(e.code)) keys.up = false;
+    if(['ArrowRight', 'KeyD'].includes(e.code)) keys.right = false;
+    if(['ArrowLeft', 'KeyA'].includes(e.code)) keys.left = false;
+    if(['ArrowUp', 'Space', 'KeyW'].includes(e.code)) keys.up = false;
 });
 
 function drawBlock(ctx, x, y, w, h, r) {
@@ -141,7 +141,7 @@ function drawBlock(ctx, x, y, w, h, r) {
     ctx.stroke();
 }
 
-class player {
+class Player {
     constructor() {
         this.w = 36;
         this.h = 36;
@@ -342,12 +342,12 @@ const LEVEL_1 = [
     "................................................................................................................",
     "........................................^.........................L.............................................",
     "...................................3333333333....................333............................................",
-    "...........................^.......3333333333......^.............333............................................",
-    "S..........................3333....3333333333.....333.....^......333.........................................G..",
-    "333333333333333333333......3333....3333333333.....333....333.....333.......................333333333333333333333",
-    "...........................3333....3333333333.....333....333.....333.......................333333333333333333333",
-    "333333333333333333333......3333....3333333333.....333....333.....333.............................................",
-    "333333333333333333333......3333....3333333333.....333....333.....333.......................3333333333333333333333"
+    "..........................^........3333333333................3...333............................................",
+    "S.........................33333....3333333333.....333.....^......333.........................................G..",
+    "333333333333333333333.....33333....3333333333.....333....3333....333.......................333333333333333333333",
+    "..........................33333....3333333333.....333....3333....333.......................333333333333333333333",
+    "333333333333333333333.....33333....3333333333.....333....3333....333.............................................",
+    "333333333333333333333.....33333....3333333333.....333....3333....333.......................3333333333333333333333"
 ];
 
 const LEVEL_2 = [
@@ -400,7 +400,7 @@ function buildLevel(){
     const map = LEVELS[currentLevelIdx];
 
     const badge = document.querySelector('.level-badge');
-    if(badge) badge.innerText = "LEVEL" + (currentLevelIdx + 1).toString().padStart(2, '0');
+    if(badge) badge.innerText = "LEVEL " + (currentLevelIdx + 1).toString().padStart(2, '0');
 
     const rows = map.length;
     const cols = map[0].length;
@@ -437,7 +437,7 @@ function buildLevel(){
             if(char === 'G') goalRect = {x: px, y: py, w: 40, h: 40};
             if(char === '|'){
                 lasers.push(new Laser(px, py - TILE_SIZE * 2));
-                presentPlatforms.push({x: py, y: py + TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE});
+                presentPlatforms.push({x: px, y: py + TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE});
             }
             if(char === 'B'){
                 buttons.push(new TimeButton(px, py + TILE_SIZE - 10));
@@ -611,6 +611,9 @@ function draw(){
     ctx.beginPath();
     ctx.rect(viewWidth, 0, viewWidth, canvas.height);
     ctx.clip();
+    ctx.fillStyle = COLORS.presentBg;
+    ctx.fillRect(viewWidth, 0, viewWidth, canvas.height);
+
     drawGrid(viewWidth);
     ctx.fillStyle = COLORS.presentPlat;
     ctx.strokeStyle = COLORS.presentBorder;
@@ -634,7 +637,7 @@ function draw(){
     }
     if(laserTimer > 0){
         ctx.fillStyle = '#00ffff'; ctx.font = '25px "Gagalin"';
-        ctx.fillText("LASER OFF: " + Math.ceil(laserTimer/60), viewWidth + 40, 120);
+        ctx.fillText("LASERS OFF: " + Math.ceil(laserTimer/60), viewWidth + 40, 120);
     }
     ctx.restore();
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 4;
@@ -668,7 +671,7 @@ function drawPlayer(ctx, x, y, alpha){
 }
 
 function drawGrid(offsetX){
-    ctx.strokeStyle = 'rgba(255,255,255,0.05'; ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
     let gridShift = -(cameraX % TILE_SIZE);
     for(let x = gridShift; x < canvas.width/2; x += TILE_SIZE){
         ctx.beginPath(); ctx.moveTo(x + offsetX, 0); ctx.lineTo(x + offsetX, canvas.height); ctx.stroke();
@@ -713,6 +716,7 @@ function resetGame(){
     deathShake = 0;
     rippleEvents = [];
     buildLevel();
+    gameOver = false;
     document.getElementById('gameEndOverlay').classList.add('hidden');
     loop();
 }
