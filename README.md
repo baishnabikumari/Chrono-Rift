@@ -1,5 +1,5 @@
 **CHRONO RIFT**
-* **see the past and clear present.
+* **see the past and clear present**
 
 ## the game is about the dual-reality world platformer built using HTML5 canvas, JS and CSS. You just have to control the character(ball) to clear amazing levels...
 

@@ -14,6 +14,10 @@ playerImg.src = 'assets/Ball1.png';
 
 const deathSound = new Audio('assets/LostInTime.mp3');
 deathSound.volume = 0.5;
+const jumpSound = new Audio('assets/jump.mp3');
+jumpSound.volume = 0.3;
+const winSound = new Audio('assets/wingame.mp3');
+winSound.volume = 0.5;
 
 // game physics
 const GRAVITY = 0.55;
@@ -221,6 +225,8 @@ class Player {
         if (this.grounded) {
             this.vy = JUMP_FORCE;
             this.grounded = false;
+            jumpSound.currentTime = 0;
+            jumpSound.play().catch(() => {});
         }
     }
 }
@@ -536,6 +542,7 @@ function triggerDeathSequence(burned){
 function triggerVictorySequence(){
     if(gameOver || victoryMode) return;
     victoryMode = true;
+    winSound.play().catch(() => {});
 
     if(currentLevelIdx === maxUnlockedLevel && currentLevelIdx < LEVELS.length - 1){
         maxUnlockedLevel++;
@@ -618,7 +625,7 @@ function draw(){
         let renderX = l.x - cameraX;
         if(renderX > -50 && renderX < viewWidth){
             ctx.save();
-            ctx.shadowBlur = '#ff0000'
+            ctx.shadowBlur = '#ff0000';
             ctx.shadowBlur = 15;
 
             ctx.fillStyle = 'rgba(60,0,0,0.7)'
