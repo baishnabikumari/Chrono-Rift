@@ -518,7 +518,7 @@ const LEVEL_4 = [
     "................................................................................................................"
 ];
 
-const LEVELS = [LEVEL_1, LEVEL_2, LEVEL_3];
+const LEVELS = [LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4];
 const player = new Player();
 const lever = new Lever(0, 0);
 let pastPlatforms = [];
