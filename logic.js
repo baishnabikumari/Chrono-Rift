@@ -2,15 +2,18 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const TILE_SIZE = 40;
 const CORNER_RADIUS = 5;
-
 const spikeImg = new Image();
 spikeImg.src = 'assets/dontTouch.png';
-
 const goalImg = new Image();
 goalImg.src = 'assets/goal.png';
-
 const playerImg = new Image();
 playerImg.src = 'assets/Ball1.png';
+
+//new obstacles
+const springImg = new Image(); 'assets/spring.png';
+const springBrokenImg = new Image(); 'assets/spring';
+const crumbImg = new Image(); 'assets/crumbly.png';
+const droneImg = new Image(); 'assets/drone.png';
 
 const deathSound = new Audio('assets/LostInTime.mp3');
 deathSound.volume = 0.5;
@@ -25,6 +28,7 @@ const ACCEL = 2;
 const FRICTION = 0.82;
 const MAX_SPEED = 7;
 const JUMP_FORCE = -13.5;
+const SPRING_FORCE = -22;
 
 const COLORS = {
     pastBg: '#1e293b',
@@ -44,6 +48,9 @@ const COLORS = {
     laserOff: '#220000',
     button: '#00ffff',
     buttonActive: '#008888',
+    spring: '#10b981',
+    crumb: '#8D6E63',
+    drone: '#9c27b0',
 }
 
 let animationId;
@@ -219,7 +226,11 @@ class Player {
         if (this.y > canvas.height + 600) triggerDeathSequence(false);
         if (checkGoalCollision(this)) triggerVictorySequence();
 
+        //check for new obstacles
         checkButtonCollision(this);
+        checkDroneCollision(this);
+        checkSpringCollision(this);
+        checkCrumbleLogic(this);
     }
     jump() {
         if (this.grounded) {
@@ -232,7 +243,8 @@ class Player {
 }
 
 function handleCollisions(p, axis) {
-    let allPlats = [...pastPlatforms, ...presentPlatforms];
+    const activeCrumbles = crumbles.filter(c => !c.falling);
+    let allPlats = [...pastPlatforms, ...presentPlatforms, ...activeCrumbles];
     let hitbox = { x: p.x + 2, y: p.y, w: p.w - 4, h: p.h };
 
     for (let plat of allPlats) {
@@ -355,6 +367,100 @@ class TimeButton{
     }
 }
 
+class Spring {
+    constructor(x, y){
+        this.x = x;
+        this.y = y;
+        this.w = TILE_SIZE;
+        this.h = TILE_SIZE;
+        this.active = true;
+    }
+    draw(ctx, renderX, isPast){
+        if(renderX < -50 || renderX > canvas.width / 2 + 50) return;
+        let Img = isPast ? springImg : springBrokenImg;
+        if(Img.complete && Img.naturalWidth !== 0){
+            ctx.drawImage(Img,renderX, this.y, this.w, this.h);
+        } else {
+            ctx.fillStyle = isPast ? COLORS.spring : '#555';
+            ctx.fillRect(renderX, this.y + 20, this.w, 20);
+            if(isPast){
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(renderX+10, this.y, this.w-20, 20);
+            }
+        }
+    }
+}
+
+class CrumblingBlock{
+    constructor(x, y){
+        this.x = x; this.y = y; this.w = TILE_SIZE; this.h = TILE_SIZE;
+        this.timer = 0;
+        this.shaking = false;
+        this.falling = false;
+    }
+    draw(ctx, renderX){
+        if(renderX < -50 || renderX > canvas.width / 2 + 50) return;
+        if(this.y > canvas.height + 100) return;
+        let shakeX = 0;
+        if(this.shaking && !this.falling) shakeX = (Math.random() - 0.5) * 4;
+
+        ctx.save();
+        ctx.translate(shakeX, 0);
+
+        if(crumbImg.complete && crumbImg.naturalWidth !== 0){
+            ctx.drawImage(crumbImg, renderX, this.y, this.w, this.h);
+        } else {
+            ctx.fillStyle = COLORS.crumb;
+            ctx.fillRect(renderX, this.y, this.w, this.h);
+            ctx.strokeStyle = '#3e2723';
+            ctx.strokeRect(renderX, this.y, this.w, this.h);
+        }
+        ctx.restore();
+    }
+    update(){
+        if(this.falling){
+            this.y += 6;
+        } else if (this.shaking){
+            this.timer++;
+            if(this.timer > 50) this.falling = true;
+        }
+    }
+}
+
+class Drone{
+    constructor(x, y, startX, endX){
+        this.x = x; this.y = y;
+        this.w = 30; this.h = 30;
+        this.startX = startX;
+        this.endX = endX;
+        this.dir = 1;
+        this.speed = 2;
+    }
+    update(){
+        this.x += this.speed * this.dir;
+        if(this.x > this.endX) {
+            this.x = this.endX;
+            this.dir = -1;
+        }
+        if(this.x < this.startX){
+            this.startX;
+            this.dir = 1;
+        }
+    }
+    draw(ctx, renderX){
+        if(renderX < -50 || renderX > canvas.width / 2 + 50) return;
+
+        const floatY = Math.sin(Date.now() / 150) * 5;
+        if(droneImg.complete && droneImg.naturalWidth !== 0){
+            ctx.drawImage(droneImg, renderX, this.y + floatY, this.w, this.h);
+        } else {
+            ctx.fillStyle = COLORS.drone;
+            ctx.beginPath(); ctx.arc(renderX + 15, this.y + 15 + floatY, 15, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = 'red';
+            ctx.fillRect(renderX + 10, this.y + 10 + floatY, 10, 5);
+        }
+    }
+}
 const LEVEL_1 = [
     "................................................................................................................",
     "................................................................................................................",
@@ -406,6 +512,9 @@ let presentPlatforms = [];
 let spikes = [];
 let lasers = [];
 let buttons = [];
+let springs = [];
+let crumbles = [];
+let drones = [];
 let goalRect = { x: 0, y: 0, w: 40, h: 40};
 
 function buildLevel(){
@@ -414,6 +523,11 @@ function buildLevel(){
     spikes = [];
     lasers = [];
     buttons = [];
+
+    //reset new array
+    springs = [];
+    crumbles = [];
+    drones = [];
     lasersActive = true;
 
     if(currentLevelIdx >= LEVELS.length) currentLevelIdx = 0;
@@ -463,6 +577,17 @@ function buildLevel(){
                 buttons.push(new TimeButton(px, py + TILE_SIZE - 10));
                 pastPlatforms.push({x: px, y: py + TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE});
             }
+            if(char === 'J'){
+                springs.push(new Spring(px, py + 10));
+                presentPlatforms.push({x: px, y: py + TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE});
+            }
+            if(char === 'C'){
+                crumbles.push(new CrumblingBlock(px, py));
+            }
+            if(char === 'D'){
+                drones.push(new Drone(px, py, px - 120, px + 120));
+            }
+
         }
     }
 }
@@ -498,6 +623,39 @@ function checkButtonCollision(p){
             laserTimer = 300;
         }
     }
+}
+function checkSpringCollision(p){
+    const pHitbox = {x: p.x, y: p.y, w: p.w, h: p.h};
+    for(let s of springs){
+        if(rectIntersect(pHitbox.x, pHitbox.y, pHitbox.w, pHitbox.h, s.y, s.w, s.h)){
+            if(p.vy > 0){
+                p.vy = SPRING_FORCE;
+                P.grounded = false;
+                jumpSound.currentTime = 0;
+                jumpSound.play().catch(()=>{});
+
+            }
+        }
+    }
+}
+function checkCrumbleLogic(p){
+    const footX = p.x + p.w / 2;
+    const footY = p.y + p.h;
+
+    for(let c of crumbles){
+        if(!c.falling && footX > c.x && footX < c.x + c.w && Math.abs(footY - c.y) < 5){
+            c.shaking = true;
+
+        }
+    }
+}
+function checkDroneCollision(p){
+    const pHitbox = {x: p.x + 4, y: p.y, w: p.w - 8, h: p.h - 8};
+    for(let d of drones){
+        const dHitbox = {x: d.x + 5, y: d.y + 5, w: d.w - 10, h: d.h - 10};
+        if(rectIntersect(pHitbox.x, pHitbox.y, pHitbox.w, pHitbox.h, dHitbox.x, dHitbox.y, dHitbox.w, dHitbox.h)) return true;
+    }
+    return false;
 }
 
 function checkGoalCollision(p){
@@ -542,6 +700,8 @@ function triggerDeathSequence(burned){
 function triggerVictorySequence(){
     if(gameOver || victoryMode) return;
     victoryMode = true;
+
+    winSound.currentTime = 0;
     winSound.play().catch(() => {});
 
     if(currentLevelIdx === maxUnlockedLevel && currentLevelIdx < LEVELS.length - 1){
@@ -619,6 +779,9 @@ function draw(){
         let rx = p.x - cameraX;
         if(rx > -50 && rx < viewWidth) drawBlock(ctx, rx, p.y, p.w, p.h, CORNER_RADIUS);
     });
+    crumbles.forEach(c => c.draw(ctx, c.x - cameraX));
+    springs.forEach(s => s.draw(ctx, s.x - cameraX, true));
+
     buttons.forEach(b => b.draw(ctx, b.x - cameraX));
     spikes.forEach(s => s.drawGhost(ctx, s.x - cameraX));
     lasers.forEach(l => {
@@ -656,6 +819,10 @@ function draw(){
         let rx = p.x - cameraX + viewWidth;
         if(rx > viewWidth - 50 && rx < canvas.width) drawBlock(ctx, rx, p.y, p.w, p.h, CORNER_RADIUS);
     });
+    crumbles.forEach(c => c.draw(ctx, s.x - cameraX + viewWidth));
+    springs.forEach(s => s.draw(ctx, cameraX + viewWidth, false));
+    drones.forEach(d => d.draw(ctx, d.x - cameraX + viewWidth));
+
     spikes.forEach(s => s.draw(ctx, s.x - cameraX + viewWidth));
     lasers.forEach(l => l.draw(ctx, l.x - cameraX + viewWidth));
 
@@ -726,6 +893,8 @@ function update(){
         }
     }
     player.update();
+    crumbles.forEach(c => c.update());
+    drones.forEach(d => d.update());
     for(let i = rippleEvents.length - 1; i >= 0; i--){
         rippleEvents[i].timer--;
         if(rippleEvents[i].timer <= 0){
