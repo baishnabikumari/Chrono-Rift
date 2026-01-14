@@ -58,6 +58,10 @@ let rippleEvents = [];
 let cameraX = 0;
 let cameraY = 0;
 let levelWidth = 0;
+//zooming
+let zoomLevel = 1.0;
+let zoomTimer = 0;
+
 let lasersActive = true;
 let laserTimer = 0;
 let isBurned = false;
@@ -642,6 +646,7 @@ function checkSpringCollision(p) {
                 p.grounded = false;
                 jumpSound.currentTime = 0;
                 jumpSound.play().catch(() => { });
+                zoomTimer = 120;//new zooming for aprox 2 secs
 
             }
         }
@@ -758,6 +763,10 @@ function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const viewWidth = canvas.width / 2;
 
+    //zoom logic
+    let targetZoom = (zoomTimer > 0) ? 0.6 : 1.0;
+    zoomLevel += (targetZoom - zoomLevel) * 0.05;
+
     //camera logic for x-axis horizontal(left-right)
     let pCenterX = (player.x || 0) + (player.w || 30) / 2;
     let targetCamX = pCenterX - viewWidth / 2;
@@ -789,6 +798,9 @@ function draw() {
     drawGrid(0);
 
     ctx.save();
+    ctx.translate(viewWidth/2, canvas.height/2);
+    ctx.scale(zoomLevel, zoomLevel);
+    ctx.translate(-viewWidth/2, -canvas.height/2);
     ctx.translate(0, -cameraY);//y-axis camera for objects
 
     ctx.fillStyle = COLORS.pastPlat;
@@ -796,7 +808,7 @@ function draw() {
     ctx.lineWidth = 2;
     pastPlatforms.forEach(p => {
         let rx = p.x - cameraX;
-        if (rx > -50 && rx < viewWidth) drawBlock(ctx, rx, p.y, p.w, p.h, CORNER_RADIUS);
+        if (rx > -200 && rx < viewWidth/zoomLevel) drawBlock(ctx, rx, p.y, p.w, p.h, CORNER_RADIUS);
     });
     crumbles.forEach(c => c.draw(ctx, c.x - cameraX));
     springs.forEach(s => s.draw(ctx, s.x - cameraX, true));
@@ -836,6 +848,9 @@ function draw() {
     drawGrid(viewWidth);
 
     ctx.save();
+    ctx.translate(viewWidth + viewWidth/2, canvas.height/2);
+    ctx.scale(zoomLevel, zoomLevel);
+    ctx.translate(-(viewWidth + viewWidth/2), -canvas.height/2);
     ctx.translate(0, -cameraY);
 
     ctx.fillStyle = COLORS.presentPlat;
@@ -860,6 +875,8 @@ function draw() {
         else { ctx.fillStyle = COLORS.goal; ctx.fillRect(goalRX, goalRect.y, goalRect.w, goalRect.h); }
     }
     ctx.restore();//end v-camera for present
+    ctx.restore();
+
     if (rippleEvents.length > 0) {
         ctx.fillStyle = '#fff'; ctx.font = '30px "Gagalin"'; ctx.fillText("REALITY SHIFTING...", viewWidth + 40, 80);
     }
@@ -911,6 +928,10 @@ function drawGrid(offsetX) {
 
 function update() {
     if (gameOver && deathShake <= 0) return;
+
+    if(zoomTimer > 0){
+        zoomTimer--;
+    }
 
     if (laserTimer > 0) {
         laserTimer--;
