@@ -2,25 +2,19 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const TILE_SIZE = 40;
 const CORNER_RADIUS = 5;
-const spikeImg = new Image();
-spikeImg.src = 'assets/dontTouch.png';
-const goalImg = new Image();
-goalImg.src = 'assets/goal.png';
-const playerImg = new Image();
-playerImg.src = 'assets/Ball1.png';
+const spikeImg = new Image(); spikeImg.src = 'assets/dontTouch.png';
+const goalImg = new Image(); goalImg.src = 'assets/goal.png';
+const playerImg = new Image(); playerImg.src = 'assets/Ball1.png';
 
 //new obstacles
-const springImg = new Image(); 'assets/spring.png';
-const springBrokenImg = new Image(); 'assets/spring';
-const crumbImg = new Image(); 'assets/crumbly.png';
-const droneImg = new Image(); 'assets/drone.png';
+const springImg = new Image(); springImg.src = 'assets/spring.png'; // fixed the name of the variable
+const springBrokenImg = new Image(); springBrokenImg.src = 'assets/spring_broken.png';
+const crumbImg = new Image(); crumbImg.src = 'assets/crumbly.png';
+const droneImg = new Image(); droneImg.src = 'assets/Drone.png';
 
-const deathSound = new Audio('assets/LostInTime.mp3');
-deathSound.volume = 0.5;
-const jumpSound = new Audio('assets/jump.mp3');
-jumpSound.volume = 0.3;
-const winSound = new Audio('assets/wingame.mp3');
-winSound.volume = 0.5;
+const deathSound = new Audio('assets/LostInTime.mp3'); deathSound.volume = 0.5;
+const jumpSound = new Audio('assets/jump.mp3'); jumpSound.volume = 0.3;
+const winSound = new Audio('assets/wingame.mp3'); winSound.volume = 0.5;
 
 // game physics
 const GRAVITY = 0.55;
@@ -80,7 +74,7 @@ window.toggleUI = function (elementId) {
     }
 };
 
-window.startGame = function(){
+window.startGame = function () {
     gameStarted = true;
     document.getElementById('startScreen').classList.add('hidden');
     resetGame();
@@ -131,7 +125,7 @@ window.addEventListener('resize', resizeCanvas);
 
 window.addEventListener('keydown', (e) => {
 
-    if(!gameStarted) return;
+    if (!gameStarted) return;
     const overlays = ['instructionOverlay', 'featuresOverlay', 'levelsOverlay', 'gameEndOverlay'];
     for (let id of overlays) {
         let el = document.getElementById(id);
@@ -140,16 +134,16 @@ window.addEventListener('keydown', (e) => {
     if (gameOver || victoryMode) return;
     if (['ArrowRight', 'KeyD'].includes(e.code)) keys.right = true;
     if (['ArrowLeft', 'KeyA'].includes(e.code)) keys.left = true;
-    if (['ArrowUp', 'Space', 'KeyW'].includes(e.code)){
-        if(!keys.up && player.grounded) player.jump();
+    if (['ArrowUp', 'Space', 'KeyW'].includes(e.code)) {
+        if (!keys.up && player.grounded) player.jump();
         keys.up = true;
     }
-    if(e.code === 'KeyE') attemptInteract();
+    if (e.code === 'KeyE') attemptInteract();
 });
 window.addEventListener('keyup', (e) => {
-    if(['ArrowRight', 'KeyD'].includes(e.code)) keys.right = false;
-    if(['ArrowLeft', 'KeyA'].includes(e.code)) keys.left = false;
-    if(['ArrowUp', 'Space', 'KeyW'].includes(e.code)) keys.up = false;
+    if (['ArrowRight', 'KeyD'].includes(e.code)) keys.right = false;
+    if (['ArrowLeft', 'KeyA'].includes(e.code)) keys.left = false;
+    if (['ArrowUp', 'Space', 'KeyW'].includes(e.code)) keys.up = false;
 });
 
 function drawBlock(ctx, x, y, w, h, r) {
@@ -237,7 +231,7 @@ class Player {
             this.vy = JUMP_FORCE;
             this.grounded = false;
             jumpSound.currentTime = 0;
-            jumpSound.play().catch(() => {});
+            jumpSound.play().catch(() => { });
         }
     }
 }
@@ -323,44 +317,44 @@ class Spike {
     }
 }
 class Laser {
-    constructor(x, y){
+    constructor(x, y) {
         this.x = x;
         this.y = y;
         this.w = 10;
         this.h = TILE_SIZE * 3;
     }
-    draw(ctx, renderX){
-        if(renderX < -50 || renderX > canvas.width/2 + 50) return;
+    draw(ctx, renderX) {
+        if (renderX < -50 || renderX > canvas.width / 2 + 50) return;
         ctx.save();
-        if(lasersActive){
+        if (lasersActive) {
             ctx.fillStyle = COLORS.laser;
             ctx.shadowColor = COLORS.laser;
             ctx.shadowBlur = 30;
             const pulse = Math.sin(Date.now() / 100) * 3;
-            ctx.fillRect(renderX + (TILE_SIZE/2 - 6) - pulse/2, this.y, 12 + pulse, this.h);
+            ctx.fillRect(renderX + (TILE_SIZE / 2 - 6) - pulse / 2, this.y, 12 + pulse, this.h);
             ctx.shadowBlur = 0;
             ctx.fillStyle = COLORS.laserCore;
-            ctx.fillRect(renderX + (TILE_SIZE/2 - 3), this.y, 6, this.h);
+            ctx.fillRect(renderX + (TILE_SIZE / 2 - 3), this.y, 6, this.h);
         } else {
             ctx.fillStyle = COLORS.laserOff;
-            ctx.fillRect(renderX + (TILE_SIZE/2 - 1), this.y, 4, this.h);
+            ctx.fillRect(renderX + (TILE_SIZE / 2 - 1), this.y, 4, this.h);
         }
         ctx.restore();
     }
 }
-class TimeButton{
-    constructor(x, y){
+class TimeButton {
+    constructor(x, y) {
         this.x = x;
         this.y = y + 30;
         this.w = TILE_SIZE;
         this.h = 10;
         this.pressed = false;
     }
-    draw(ctx, renderX){
-        if(renderX < -50 || renderX > canvas.width/2 + 50) return;
+    draw(ctx, renderX) {
+        if (renderX < -50 || renderX > canvas.width / 2 + 50) return;
         ctx.fillStyle = this.pressed ? COLORS.buttonActive : COLORS.button;
         ctx.fillRect(renderX, this.y, this.w, this.h);
-        if(!this.pressed){
+        if (!this.pressed) {
             ctx.fillStyle = 'rgba(255,255,255,0.8)';
             ctx.fillRect(renderX + 5, this.y - 5, this.w - 10, 5);
         }
@@ -368,46 +362,46 @@ class TimeButton{
 }
 
 class Spring {
-    constructor(x, y){
+    constructor(x, y) {
         this.x = x;
         this.y = y;
         this.w = TILE_SIZE;
         this.h = TILE_SIZE;
         this.active = true;
     }
-    draw(ctx, renderX, isPast){
-        if(renderX < -50 || renderX > canvas.width / 2 + 50) return;
+    draw(ctx, renderX, isPast) {
+        if (renderX < -50 || renderX > canvas.width / 2 + 50) return;
         let Img = isPast ? springImg : springBrokenImg;
-        if(Img.complete && Img.naturalWidth !== 0){
-            ctx.drawImage(Img,renderX, this.y, this.w, this.h);
+        if (Img.complete && Img.naturalWidth !== 0) {
+            ctx.drawImage(Img, renderX, this.y, this.w, this.h);
         } else {
             ctx.fillStyle = isPast ? COLORS.spring : '#555';
             ctx.fillRect(renderX, this.y + 20, this.w, 20);
-            if(isPast){
+            if (isPast) {
                 ctx.fillStyle = '#fff';
-                ctx.fillRect(renderX+10, this.y, this.w-20, 20);
+                ctx.fillRect(renderX + 10, this.y, this.w - 20, 20);
             }
         }
     }
 }
 
-class CrumblingBlock{
-    constructor(x, y){
+class CrumblingBlock {
+    constructor(x, y) {
         this.x = x; this.y = y; this.w = TILE_SIZE; this.h = TILE_SIZE;
         this.timer = 0;
         this.shaking = false;
         this.falling = false;
     }
-    draw(ctx, renderX){
-        if(renderX < -50 || renderX > canvas.width / 2 + 50) return;
-        if(this.y > canvas.height + 100) return;
+    draw(ctx, renderX) {
+        if (renderX < -50 || renderX > canvas.width / 2 + 50) return;
+        if (this.y > canvas.height + 100) return;
         let shakeX = 0;
-        if(this.shaking && !this.falling) shakeX = (Math.random() - 0.5) * 4;
+        if (this.shaking && !this.falling) shakeX = (Math.random() - 0.5) * 4;
 
         ctx.save();
         ctx.translate(shakeX, 0);
 
-        if(crumbImg.complete && crumbImg.naturalWidth !== 0){
+        if (crumbImg.complete && crumbImg.naturalWidth !== 0) {
             ctx.drawImage(crumbImg, renderX, this.y, this.w, this.h);
         } else {
             ctx.fillStyle = COLORS.crumb;
@@ -417,18 +411,18 @@ class CrumblingBlock{
         }
         ctx.restore();
     }
-    update(){
-        if(this.falling){
+    update() {
+        if (this.falling) {
             this.y += 6;
-        } else if (this.shaking){
+        } else if (this.shaking) {
             this.timer++;
-            if(this.timer > 50) this.falling = true;
+            if (this.timer > 50) this.falling = true;
         }
     }
 }
 
-class Drone{
-    constructor(x, y, startX, endX){
+class Drone {
+    constructor(x, y, startX, endX) {
         this.x = x; this.y = y;
         this.w = 30; this.h = 30;
         this.startX = startX;
@@ -436,26 +430,26 @@ class Drone{
         this.dir = 1;
         this.speed = 2;
     }
-    update(){
+    update() {
         this.x += this.speed * this.dir;
-        if(this.x > this.endX) {
+        if (this.x > this.endX) {
             this.x = this.endX;
             this.dir = -1;
         }
-        if(this.x < this.startX){
+        if (this.x < this.startX) {
             this.startX;
             this.dir = 1;
         }
     }
-    draw(ctx, renderX){
-        if(renderX < -50 || renderX > canvas.width / 2 + 50) return;
+    draw(ctx, renderX) {
+        if (renderX < -50 || renderX > canvas.width / 2 + 50) return;
 
         const floatY = Math.sin(Date.now() / 150) * 5;
-        if(droneImg.complete && droneImg.naturalWidth !== 0){
+        if (droneImg.complete && droneImg.naturalWidth !== 0) {
             ctx.drawImage(droneImg, renderX, this.y + floatY, this.w, this.h);
         } else {
             ctx.fillStyle = COLORS.drone;
-            ctx.beginPath(); ctx.arc(renderX + 15, this.y + 15 + floatY, 15, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(renderX + 15, this.y + 15 + floatY, 15, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = 'red';
             ctx.fillRect(renderX + 10, this.y + 10 + floatY, 10, 5);
         }
@@ -512,10 +506,10 @@ const LEVEL_4 = [
     ".................................................333333.........................................................",
     ".................................................333333.........................................................",
     "......................^................J.........333333.........................................................",
-    "..................333333.............3333.......33333333.............J..........................................",
-    "S................33333333...........333333......33333333............333......................................G..",
-    "333333..........3333333333.........33333333.....33333333...........33333......................333333333333333333",
-    "................................................................................................................"
+    "..................3333333............3333.......33333333.............J..........................................",
+    "S...........33...333333333..........333333......33333333............333...............3......................G..",
+    "333333......33.333333333333........33333333.....33333333...........33333.............33.......333333333333333333",
+    "....................................................................................333333......................"
 ];
 
 const LEVELS = [LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4];
@@ -529,9 +523,9 @@ let buttons = [];
 let springs = [];
 let crumbles = [];
 let drones = [];
-let goalRect = { x: 0, y: 0, w: 40, h: 40};
+let goalRect = { x: 0, y: 0, w: 40, h: 40 };
 
-function buildLevel(){
+function buildLevel() {
     pastPlatforms = [];
     presentPlatforms = [];
     spikes = [];
@@ -544,11 +538,11 @@ function buildLevel(){
     drones = [];
     lasersActive = true;
 
-    if(currentLevelIdx >= LEVELS.length) currentLevelIdx = 0;
+    if (currentLevelIdx >= LEVELS.length) currentLevelIdx = 0;
     const map = LEVELS[currentLevelIdx];
 
     const badge = document.querySelector('.level-badge');
-    if(badge) badge.innerText = "LEVEL " + (currentLevelIdx + 1).toString().padStart(2, '0');
+    if (badge) badge.innerText = "LEVEL " + (currentLevelIdx + 1).toString().padStart(2, '0');
 
     const rows = map.length;
     const cols = map[0].length;
@@ -557,48 +551,48 @@ function buildLevel(){
     const startY = canvas.height - (rows * TILE_SIZE) - 40;
     const startX = 50;
 
-    for(let r = 0; r < rows; r++){
-        for(let c = 0; c < cols; c++){
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
             let char = map[r][c];
             let px = startX + c * TILE_SIZE;
             let py = startY + r * TILE_SIZE;
 
-            if (char === '1') pastPlatforms.push({x: px, y: py, w: TILE_SIZE, h: TILE_SIZE});
-            if (char === '2') presentPlatforms.push({x: px, y: py, w: TILE_SIZE, h: TILE_SIZE});
-            if (char === '3'){
-                pastPlatforms.push({x: px, y: py, w: TILE_SIZE, h: TILE_SIZE});
-                presentPlatforms.push({x: px, y: py, w: TILE_SIZE, h: TILE_SIZE});
+            if (char === '1') pastPlatforms.push({ x: px, y: py, w: TILE_SIZE, h: TILE_SIZE });
+            if (char === '2') presentPlatforms.push({ x: px, y: py, w: TILE_SIZE, h: TILE_SIZE });
+            if (char === '3') {
+                pastPlatforms.push({ x: px, y: py, w: TILE_SIZE, h: TILE_SIZE });
+                presentPlatforms.push({ x: px, y: py, w: TILE_SIZE, h: TILE_SIZE });
             }
             if (char === 'S') {
                 player.x = px;
                 player.y = py - 50;
             }
-            if(char === 'L'){
+            if (char === 'L') {
                 lever.x = px;
                 lever.y = py + TILE_SIZE;
-                pastPlatforms.push({x: px, y: py + TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE});
+                pastPlatforms.push({ x: px, y: py + TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE });
             }
             if (char === '^') {
                 spikes.push(new Spike(px, py));
-                presentPlatforms.push({x: px, y: py + TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE});
+                presentPlatforms.push({ x: px, y: py + TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE });
             }
-            if(char === 'G') goalRect = {x: px, y: py, w: 40, h: 40};
-            if(char === '|'){
+            if (char === 'G') goalRect = { x: px, y: py, w: 40, h: 40 };
+            if (char === '|') {
                 lasers.push(new Laser(px, py - TILE_SIZE * 2));
-                presentPlatforms.push({x: px, y: py + TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE});
+                presentPlatforms.push({ x: px, y: py + TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE });
             }
-            if(char === 'B'){
+            if (char === 'B') {
                 buttons.push(new TimeButton(px, py + TILE_SIZE - 10));
-                pastPlatforms.push({x: px, y: py + TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE});
+                pastPlatforms.push({ x: px, y: py + TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE });
             }
-            if(char === 'J'){
+            if (char === 'J') {
                 springs.push(new Spring(px, py + 10));
-                presentPlatforms.push({x: px, y: py + TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE});
+                presentPlatforms.push({ x: px, y: py + TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE });
             }
-            if(char === 'C'){
+            if (char === 'C') {
                 crumbles.push(new CrumblingBlock(px, py));
             }
-            if(char === 'D'){
+            if (char === 'D') {
                 drones.push(new Drone(px, py, px - 120, px + 120));
             }
 
@@ -607,98 +601,98 @@ function buildLevel(){
 }
 
 //logic
-function checkHazardCollision(p){
-    const pHitbox = {x: p.x + 4, y: p.y + 4, w: p.w - 8, h: p.h - 8};
-    for (let s of spikes){
-        const sHitbox = { x: s.x + 8, y: s.y + 8, w: s.w - 16, h: s.h - 8};
-        if(rectIntersect(pHitbox.x, pHitbox.y, pHitbox.w, pHitbox.h, sHitbox.x, sHitbox.y, sHitbox.w, sHitbox.h)) return true;
+function checkHazardCollision(p) {
+    const pHitbox = { x: p.x + 4, y: p.y + 4, w: p.w - 8, h: p.h - 8 };
+    for (let s of spikes) {
+        const sHitbox = { x: s.x + 8, y: s.y + 8, w: s.w - 16, h: s.h - 8 };
+        if (rectIntersect(pHitbox.x, pHitbox.y, pHitbox.w, pHitbox.h, sHitbox.x, sHitbox.y, sHitbox.w, sHitbox.h)) return true;
     }
     return false;
 }
 
-function checkLaserCollision(p){
-    if(!lasersActive) return false;
-    const pHitbox = {x: p.x + 8, y: p.y + 8, w: p.w - 16, h: p.h - 16};
-    for(let l of lasers){
-        const lHitbox = {x: l.x + TILE_SIZE/2 - 5, y: l.y, w: 10, h: l.h};
-        if(rectIntersect(pHitbox.x, pHitbox.y, pHitbox.w, pHitbox.h, lHitbox.x, lHitbox.y, lHitbox.w, lHitbox.h)) return true;
+function checkLaserCollision(p) {
+    if (!lasersActive) return false;
+    const pHitbox = { x: p.x + 8, y: p.y + 8, w: p.w - 16, h: p.h - 16 };
+    for (let l of lasers) {
+        const lHitbox = { x: l.x + TILE_SIZE / 2 - 5, y: l.y, w: 10, h: l.h };
+        if (rectIntersect(pHitbox.x, pHitbox.y, pHitbox.w, pHitbox.h, lHitbox.x, lHitbox.y, lHitbox.w, lHitbox.h)) return true;
     }
     return false;
 }
 
-function checkButtonCollision(p){
+function checkButtonCollision(p) {
     const footX = p.x + p.w / 2;
     const footY = p.y + p.h;
 
-    for(let b of buttons){
-        if(!b.pressed && footX > b.x && footX < b.x + b.w && Math.abs(footY - b.y) < 10){
+    for (let b of buttons) {
+        if (!b.pressed && footX > b.x && footX < b.x + b.w && Math.abs(footY - b.y) < 10) {
             b.pressed = true;
             lasersActive = false;
             laserTimer = 300;
         }
     }
 }
-function checkSpringCollision(p){
-    const pHitbox = {x: p.x, y: p.y, w: p.w, h: p.h};
-    for(let s of springs){
-        if(rectIntersect(pHitbox.x, pHitbox.y, pHitbox.w, pHitbox.h, s.y, s.w, s.h)){
-            if(p.vy > 0){
+function checkSpringCollision(p) {
+    const pHitbox = { x: p.x, y: p.y, w: p.w, h: p.h };
+    for (let s of springs) {
+        if (rectIntersect(pHitbox.x, pHitbox.y, pHitbox.w, pHitbox.h, s.y, s.w, s.h)) {
+            if (p.vy > 0) {
                 p.vy = SPRING_FORCE;
-                P.grounded = false;
+                p.grounded = false;
                 jumpSound.currentTime = 0;
-                jumpSound.play().catch(()=>{});
+                jumpSound.play().catch(() => { });
 
             }
         }
     }
 }
-function checkCrumbleLogic(p){
+function checkCrumbleLogic(p) {
     const footX = p.x + p.w / 2;
     const footY = p.y + p.h;
 
-    for(let c of crumbles){
-        if(!c.falling && footX > c.x && footX < c.x + c.w && Math.abs(footY - c.y) < 5){
+    for (let c of crumbles) {
+        if (!c.falling && footX > c.x && footX < c.x + c.w && Math.abs(footY - c.y) < 5) {
             c.shaking = true;
 
         }
     }
 }
-function checkDroneCollision(p){
-    const pHitbox = {x: p.x + 4, y: p.y, w: p.w - 8, h: p.h - 8};
-    for(let d of drones){
-        const dHitbox = {x: d.x + 5, y: d.y + 5, w: d.w - 10, h: d.h - 10};
-        if(rectIntersect(pHitbox.x, pHitbox.y, pHitbox.w, pHitbox.h, dHitbox.x, dHitbox.y, dHitbox.w, dHitbox.h)) return true;
+function checkDroneCollision(p) {
+    const pHitbox = { x: p.x + 4, y: p.y, w: p.w - 8, h: p.h - 8 };
+    for (let d of drones) {
+        const dHitbox = { x: d.x + 5, y: d.y + 5, w: d.w - 10, h: d.h - 10 };
+        if (rectIntersect(pHitbox.x, pHitbox.y, pHitbox.w, pHitbox.h, dHitbox.x, dHitbox.y, dHitbox.w, dHitbox.h)) return true;
     }
     return false;
 }
 
-function checkGoalCollision(p){
+function checkGoalCollision(p) {
     return rectIntersect(p.x, p.y, p.w, p.h, goalRect.x, goalRect.y, goalRect.w, goalRect.h);
 }
 
-function rectIntersect(x1,y1,w1,h1,x2,y2,w2,h2){
+function rectIntersect(x1, y1, w1, h1, x2, y2, w2, h2) {
     return x2 < x1 + w1 && x2 + w2 > x1 && y2 < y1 + h1 && y2 + h2 > y1;
 }
 
-function attemptInteract(){
+function attemptInteract() {
     const dist = Math.hypot(player.x - lever.x, player.y - lever.y);
-    if(dist < 80 && !lever.active){
+    if (dist < 80 && !lever.active) {
         lever.active = true;
         rippleEvents.push({
             timer: 45,
             execute: () => {
                 const bridgeY = lever.y + TILE_SIZE;
                 const bridgeStartX = lever.x + 150;
-                for(let i=0; i<30; i++){
-                    presentPlatforms.push({x: bridgeStartX + (i * TILE_SIZE), y: bridgeY, w: TILE_SIZE, h: TILE_SIZE});
+                for (let i = 0; i < 30; i++) {
+                    presentPlatforms.push({ x: bridgeStartX + (i * TILE_SIZE), y: bridgeY, w: TILE_SIZE, h: TILE_SIZE });
                 }
             }
         });
     }
 }
 
-function triggerDeathSequence(burned){
-    if(gameOver) return;
+function triggerDeathSequence(burned) {
+    if (gameOver) return;
     gameOver = true;
     player.dead = true;
     deathShake = 20;
@@ -711,14 +705,14 @@ function triggerDeathSequence(burned){
     }, 500);
 }
 
-function triggerVictorySequence(){
-    if(gameOver || victoryMode) return;
+function triggerVictorySequence() {
+    if (gameOver || victoryMode) return;
     victoryMode = true;
 
     winSound.currentTime = 0;
-    winSound.play().catch(() => {});
+    winSound.play().catch(() => { });
 
-    if(currentLevelIdx === maxUnlockedLevel && currentLevelIdx < LEVELS.length - 1){
+    if (currentLevelIdx === maxUnlockedLevel && currentLevelIdx < LEVELS.length - 1) {
         maxUnlockedLevel++;
         localStorage.setItem('chrono_unlocked', maxUnlockedLevel);
     }
@@ -728,7 +722,7 @@ function triggerVictorySequence(){
     }, 1500);
 }
 
-function showOverlay(win){
+function showOverlay(win) {
     const overlay = document.getElementById('gameEndOverlay');
     overlay.style.backgroundColor = "rgba(0,0,0,0.7)";
     const title = document.getElementById('endTitle');
@@ -737,11 +731,11 @@ function showOverlay(win){
 
     overlay.classList.remove('hidden');
 
-    if(win){
+    if (win) {
         title.innerText = "LEVEL CLEARED!";
         title.style.color = '#4ade80';
 
-        if(currentLevelIdx < LEVELS.length - 1){
+        if (currentLevelIdx < LEVELS.length - 1) {
             nextBtn.style.display = 'block';
             retryBtn.style.display = 'none';
         } else {
@@ -759,10 +753,10 @@ function showOverlay(win){
     }
 }
 
-function draw(){
+function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const viewWidth = canvas.width / 2;
-    let pCenterX = (player.x || 0) + (player.w || 30)/2;
+    let pCenterX = (player.x || 0) + (player.w || 30) / 2;
     let targetCamX = pCenterX - viewWidth / 2;
     const maxCamX = Math.max(0, levelWidth - viewWidth + 100);
     cameraX = Math.max(0, Math.min(targetCamX, maxCamX));
@@ -770,20 +764,20 @@ function draw(){
     //shaking of sreen
     let shakeX = 0;
     let shakeY = 0;
-    if(deathShake > 0){
+    if (deathShake > 0) {
         shakeX = (Math.random() - 0.5) * deathShake;
         shakeY = (Math.random() - 0.5) * deathShake;
         deathShake *= 0.9;
-        if(deathShake < 1) deathShake = 0;
+        if (deathShake < 1) deathShake = 0;
     }
     ctx.save();
     ctx.translate(shakeX, shakeY);
     ctx.save();
-    ctx.rect(0,0,viewWidth,canvas.height);
+    ctx.rect(0, 0, viewWidth, canvas.height);
     ctx.clip();
 
     ctx.fillStyle = COLORS.pastBg;
-    ctx.fillRect(0,0,viewWidth,canvas.height);
+    ctx.fillRect(0, 0, viewWidth, canvas.height);
     drawGrid(0);
 
     ctx.fillStyle = COLORS.pastPlat;
@@ -791,7 +785,7 @@ function draw(){
     ctx.lineWidth = 2;
     pastPlatforms.forEach(p => {
         let rx = p.x - cameraX;
-        if(rx > -50 && rx < viewWidth) drawBlock(ctx, rx, p.y, p.w, p.h, CORNER_RADIUS);
+        if (rx > -50 && rx < viewWidth) drawBlock(ctx, rx, p.y, p.w, p.h, CORNER_RADIUS);
     });
     crumbles.forEach(c => c.draw(ctx, c.x - cameraX));
     springs.forEach(s => s.draw(ctx, s.x - cameraX, true));
@@ -800,16 +794,16 @@ function draw(){
     spikes.forEach(s => s.drawGhost(ctx, s.x - cameraX));
     lasers.forEach(l => {
         let renderX = l.x - cameraX;
-        if(renderX > -50 && renderX < viewWidth){
+        if (renderX > -50 && renderX < viewWidth) {
             ctx.save();
             ctx.shadowBlur = '#ff0000';
             ctx.shadowBlur = 15;
 
             ctx.fillStyle = 'rgba(60,0,0,0.7)'
-            ctx.fillRect(renderX + (TILE_SIZE/2 - 4), l.y, 8, l.h);
+            ctx.fillRect(renderX + (TILE_SIZE / 2 - 4), l.y, 8, l.h);
             ctx.shadowBlur = 0;
             ctx.fillStyle = '#000000';
-            ctx.fillRect(renderX + (TILE_SIZE/2 - 1), l.y, 2, l.h);
+            ctx.fillRect(renderX + (TILE_SIZE / 2 - 1), l.y, 2, l.h);
 
             ctx.restore();
         }
@@ -831,10 +825,10 @@ function draw(){
     ctx.lineWidth = 2;
     presentPlatforms.forEach(p => {
         let rx = p.x - cameraX + viewWidth;
-        if(rx > viewWidth - 50 && rx < canvas.width) drawBlock(ctx, rx, p.y, p.w, p.h, CORNER_RADIUS);
+        if (rx > viewWidth - 50 && rx < canvas.width) drawBlock(ctx, rx, p.y, p.w, p.h, CORNER_RADIUS);
     });
-    crumbles.forEach(c => c.draw(ctx, s.x - cameraX + viewWidth));
-    springs.forEach(s => s.draw(ctx, cameraX + viewWidth, false));
+    crumbles.forEach(c => c.draw(ctx, c.x - cameraX + viewWidth));
+    springs.forEach(s => s.draw(ctx, s.x - cameraX + viewWidth, false));
     drones.forEach(d => d.draw(ctx, d.x - cameraX + viewWidth));
 
     spikes.forEach(s => s.draw(ctx, s.x - cameraX + viewWidth));
@@ -843,16 +837,16 @@ function draw(){
     drawPlayer(ctx, player.x - cameraX + viewWidth, player.y, 0.5);
 
     let goalRX = goalRect.x - cameraX + viewWidth;
-    if(goalRX > viewWidth - 50){
-        if(goalImg.complete && goalImg.naturalWidth !== 0) ctx.drawImage(goalImg, goalRX, goalRect.y, goalRect.w, goalRect.h);
+    if (goalRX > viewWidth - 50) {
+        if (goalImg.complete && goalImg.naturalWidth !== 0) ctx.drawImage(goalImg, goalRX, goalRect.y, goalRect.w, goalRect.h);
         else { ctx.fillStyle = COLORS.goal; ctx.fillRect(goalRX, goalRect.y, goalRect.w, goalRect.h); }
     }
-    if(rippleEvents.length > 0){
+    if (rippleEvents.length > 0) {
         ctx.fillStyle = '#fff'; ctx.font = '30px "Gagalin"'; ctx.fillText("REALITY SHIFTING...", viewWidth + 40, 80);
     }
-    if(laserTimer > 0){
+    if (laserTimer > 0) {
         ctx.fillStyle = '#00ffff'; ctx.font = '25px "Gagalin"';
-        ctx.fillText("LASERS OFF: " + Math.ceil(laserTimer/60), viewWidth + 40, 120);
+        ctx.fillText("LASERS OFF: " + Math.ceil(laserTimer / 60), viewWidth + 40, 120);
     }
     ctx.restore();
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 4;
@@ -860,48 +854,48 @@ function draw(){
     ctx.restore();
 }
 
-function drawPlayer(ctx, x, y, alpha){
+function drawPlayer(ctx, x, y, alpha) {
     ctx.save();
-    let cx = x + player.w/2;
-    let cy = y + player.h/2;
+    let cx = x + player.w / 2;
+    let cy = y + player.h / 2;
     ctx.translate(cx, cy);
     ctx.rotate(player.angle);
     ctx.globalAlpha = alpha;
 
-    if(isBurned && alpha === 1){
+    if (isBurned && alpha === 1) {
         ctx.shadowColor = 'orange'; ctx.shadowBlur = 20;
         ctx.fillStyle = '#222';
-        ctx.beginPath(); ctx.arc(0,0,player.w/2, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, player.w / 2, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = 'orange'; ctx.lineWidth = 3; ctx.stroke();
     } else {
         let drawOffset = (player.drawSize - player.h) / 2;
-        if(playerImg.complete && playerImg.naturalWidth !== 0){
-            ctx.drawImage(playerImg, -player.drawSize/2, -player.drawSize/2 - drawOffset/2, player.drawSize, player.drawSize);
+        if (playerImg.complete && playerImg.naturalWidth !== 0) {
+            ctx.drawImage(playerImg, -player.drawSize / 2, -player.drawSize / 2 - drawOffset / 2, player.drawSize, player.drawSize);
         } else {
             ctx.fillStyle = COLORS.player;
-            ctx.beginPath(); ctx.arc(0, 0, player.w/2, 0 , Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(0, 0, player.w / 2, 0, Math.PI * 2); ctx.fill();
         }
     }
     ctx.restore();
 }
 
-function drawGrid(offsetX){
+function drawGrid(offsetX) {
     ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1;
     let gridShift = -(cameraX % TILE_SIZE);
-    for(let x = gridShift; x < canvas.width/2; x += TILE_SIZE){
+    for (let x = gridShift; x < canvas.width / 2; x += TILE_SIZE) {
         ctx.beginPath(); ctx.moveTo(x + offsetX, 0); ctx.lineTo(x + offsetX, canvas.height); ctx.stroke();
     }
-    for(let y = 0; y < canvas.height; y += TILE_SIZE){
-        ctx.beginPath(); ctx.moveTo(offsetX, y); ctx.lineTo(offsetX + canvas.width/2, y); ctx.stroke();
+    for (let y = 0; y < canvas.height; y += TILE_SIZE) {
+        ctx.beginPath(); ctx.moveTo(offsetX, y); ctx.lineTo(offsetX + canvas.width / 2, y); ctx.stroke();
     }
 }
 
-function update(){
-    if(gameOver && deathShake <= 0) return;
+function update() {
+    if (gameOver && deathShake <= 0) return;
 
-    if(laserTimer > 0){
+    if (laserTimer > 0) {
         laserTimer--;
-        if(laserTimer <= 0){
+        if (laserTimer <= 0) {
             lasersActive = true;
             buttons.forEach(b => b.pressed = false);
         }
@@ -909,24 +903,24 @@ function update(){
     player.update();
     crumbles.forEach(c => c.update());
     drones.forEach(d => d.update());
-    for(let i = rippleEvents.length - 1; i >= 0; i--){
+    for (let i = rippleEvents.length - 1; i >= 0; i--) {
         rippleEvents[i].timer--;
-        if(rippleEvents[i].timer <= 0){
+        if (rippleEvents[i].timer <= 0) {
             rippleEvents[i].execute();
             rippleEvents.splice(i, 1);
         }
     }
 }
 
-function loop(){
+function loop() {
     update();
     draw();
     animationId = requestAnimationFrame(loop);
 }
 
-function resetGame(){
-    if(animationId) cancelAnimationFrame(animationId);
-    keys = { right: false, left: false, up: false};
+function resetGame() {
+    if (animationId) cancelAnimationFrame(animationId);
+    keys = { right: false, left: false, up: false };
     player.reset();
     lever.active = false;
     victoryMode = false;
