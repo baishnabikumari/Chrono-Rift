@@ -56,6 +56,7 @@ let gameStarted = false;
 let deathShake = 0;
 let rippleEvents = [];
 let cameraX = 0;
+let cameraY = 0;
 let levelWidth = 0;
 let lasersActive = true;
 let laserTimer = 0;
@@ -586,7 +587,7 @@ function buildLevel() {
                 pastPlatforms.push({ x: px, y: py + TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE });
             }
             if (char === 'J') {
-                springs.push(new Spring(px, py + 10));
+                springs.push(new Spring(px, py));
                 presentPlatforms.push({ x: px, y: py + TILE_SIZE, w: TILE_SIZE, h: TILE_SIZE });
             }
             if (char === 'C') {
@@ -633,10 +634,10 @@ function checkButtonCollision(p) {
     }
 }
 function checkSpringCollision(p) {
-    const pHitbox = { x: p.x, y: p.y, w: p.w, h: p.h };
+    const pHitbox = {x: p.x, y: p.y, w: p.w, h: p.h};
     for (let s of springs) {
-        if (rectIntersect(pHitbox.x, pHitbox.y, pHitbox.w, pHitbox.h, s.y, s.w, s.h)) {
-            if (p.vy > 0) {
+        if (rectIntersect(pHitbox.x, pHitbox.y, pHitbox.w, pHitbox.h, s.x, s.y, s.w, s.h)) {
+            if (p.vy >= 0) {
                 p.vy = SPRING_FORCE;
                 p.grounded = false;
                 jumpSound.currentTime = 0;
@@ -756,10 +757,17 @@ function showOverlay(win) {
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const viewWidth = canvas.width / 2;
+
+    //camera logic for x-axis horizontal(left-right)
     let pCenterX = (player.x || 0) + (player.w || 30) / 2;
     let targetCamX = pCenterX - viewWidth / 2;
     const maxCamX = Math.max(0, levelWidth - viewWidth + 100);
     cameraX = Math.max(0, Math.min(targetCamX, maxCamX));
+
+    //now adding the camera login for y-axis
+    let targetCamY = player.y - (canvas.height * 0.6);
+    if(targetCamY > 0) targetCamY = 0;
+    cameraY = targetCamY;
 
     //shaking of sreen
     let shakeX = 0;
@@ -779,6 +787,9 @@ function draw() {
     ctx.fillStyle = COLORS.pastBg;
     ctx.fillRect(0, 0, viewWidth, canvas.height);
     drawGrid(0);
+
+    ctx.save();
+    ctx.translate(0, -cameraY);//y-axis camera for objects
 
     ctx.fillStyle = COLORS.pastPlat;
     ctx.strokeStyle = COLORS.pastBorder;
@@ -811,15 +822,22 @@ function draw() {
     lever.draw(ctx, lever.x - cameraX);
     drawPlayer(ctx, player.x - cameraX, player.y, 1);
 
+    ctx.restore();//v-camera for past
     ctx.restore();
+
     ctx.save();
     ctx.beginPath();
     ctx.rect(viewWidth, 0, viewWidth, canvas.height);
     ctx.clip();
+
+    //bg
     ctx.fillStyle = COLORS.presentBg;
     ctx.fillRect(viewWidth, 0, viewWidth, canvas.height);
-
     drawGrid(viewWidth);
+
+    ctx.save();
+    ctx.translate(0, -cameraY);
+
     ctx.fillStyle = COLORS.presentPlat;
     ctx.strokeStyle = COLORS.presentBorder;
     ctx.lineWidth = 2;
@@ -841,6 +859,7 @@ function draw() {
         if (goalImg.complete && goalImg.naturalWidth !== 0) ctx.drawImage(goalImg, goalRX, goalRect.y, goalRect.w, goalRect.h);
         else { ctx.fillStyle = COLORS.goal; ctx.fillRect(goalRX, goalRect.y, goalRect.w, goalRect.h); }
     }
+    ctx.restore();//end v-camera for present
     if (rippleEvents.length > 0) {
         ctx.fillStyle = '#fff'; ctx.font = '30px "Gagalin"'; ctx.fillText("REALITY SHIFTING...", viewWidth + 40, 80);
     }
