@@ -397,7 +397,7 @@ class CrumblingBlock {
         this.shaking = false;
         this.falling = false;
     }
-    draw(ctx, renderX) {
+    draw(ctx, renderX, isPast) {
         if (renderX < -50 || renderX > canvas.width / 2 + 50) return;
         if (this.y > canvas.height + 100) return;
         let shakeX = 0;
@@ -405,14 +405,18 @@ class CrumblingBlock {
 
         ctx.save();
         ctx.translate(shakeX, 0);
+        if(isPast){
+            ctx.fillStyle = COLORS.pastPlat;
+            ctx.strokeStyle = COLORS.pastBorder;
+        } else {
+            ctx.fillStyle = COLORS.presentPlat;
+            ctx.strokeStyle = COLORS.presentBorder;
+        }
+        ctx.lineWidth = 2;
+        drawBlock(ctx, renderX, this.y, this.w, this.h, CORNER_RADIUS);
 
         if (crumbImg.complete && crumbImg.naturalWidth !== 0) {
             ctx.drawImage(crumbImg, renderX, this.y, this.w, this.h);
-        } else {
-            ctx.fillStyle = COLORS.crumb;
-            ctx.fillRect(renderX, this.y, this.w, this.h);
-            ctx.strokeStyle = '#3e2723';
-            ctx.strokeRect(renderX, this.y, this.w, this.h);
         }
         ctx.restore();
     }
@@ -520,15 +524,15 @@ const LEVEL_4 = [
 const LEVEL_5 = [
     "................................................................................................................",
     "................................................................................................................",
-    "33..333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333",
+    "33..3333333333333333333333333333333333333333333333333333333333333333333333333333..33333333333333333333333333..33",
     "................................................................................................................",
-    "S......................C...C...C......................C.........................................................",
-    "3333333...........3333333333333333333.........33333333333.......333333333333........3333333333333333333333333333",
-    "......3...........3.................3.........3.........3.......3..........3........3........................G..",
-    "......3...^.......3.................3....^....3.........3.......3....^.....3........3........................333",
-    "......3333333333333.................33333333333.........3.......333333333333........3...........................",
+    "S............................................................................................................^..",
+    "3333333...........333CCCCCCCCCCCC3..3.........3333333CCCC.......333333333333........333333333333.............333",
+    "......3...........3.................3.........3.........3.......................J...........................G...",
+    "......3...^.......3.................3....^....3.........3....CC.3....^.....3...CC........................3333333",
+    "......3333333333333.................3CCCCCCCCC3.........3.......333333333333......333..........CCCC.............",
     "........................................................3.......3...................3...........................",
-    "........................................................333333333...................3333333333333333333333333333"
+    "........................................................333333333...................3333333333.................."
 ];
 
 const LEVELS = [LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_5];
@@ -828,7 +832,7 @@ function draw() {
         let rx = p.x - cameraX;
         if (rx > -200 && rx < viewWidth/zoomLevel) drawBlock(ctx, rx, p.y, p.w, p.h, CORNER_RADIUS);
     });
-    crumbles.forEach(c => c.draw(ctx, c.x - cameraX));
+    crumbles.forEach(c => c.draw(ctx, c.x - cameraX, true));
     springs.forEach(s => s.draw(ctx, s.x - cameraX, true));
 
     buttons.forEach(b => b.draw(ctx, b.x - cameraX));
@@ -876,9 +880,9 @@ function draw() {
     ctx.lineWidth = 2;
     presentPlatforms.forEach(p => {
         let rx = p.x - cameraX + viewWidth;
-        if (rx > viewWidth - 50 && rx < canvas.width) drawBlock(ctx, rx, p.y, p.w, p.h, CORNER_RADIUS);
+        if (rx > viewWidth - 200 && rx < canvas.width) drawBlock(ctx, rx, p.y, p.w, p.h, CORNER_RADIUS);
     });
-    crumbles.forEach(c => c.draw(ctx, c.x - cameraX + viewWidth));
+    crumbles.forEach(c => c.draw(ctx, c.x - cameraX + viewWidth, false));
     springs.forEach(s => s.draw(ctx, s.x - cameraX + viewWidth, false));
     drones.forEach(d => d.draw(ctx, d.x - cameraX + viewWidth));
 
