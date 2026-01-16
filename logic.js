@@ -61,7 +61,8 @@ let levelWidth = 0;
 //zooming
 let zoomLevel = 1.0;
 let zoomTimer = 0;
-
+let zoomModes = [1.0, 0.7, 0.5]; //0.5 for huge area and 1.0, 0.7 for like more 
+let currentZoomIdx = 0;
 let lasersActive = true;
 let laserTimer = 0;
 let isBurned = false;
@@ -83,6 +84,11 @@ window.startGame = function () {
     gameStarted = true;
     document.getElementById('startScreen').classList.add('hidden');
     resetGame();
+}
+
+window.toggleScope = function(){
+    currentZoomIdx++;
+    if(currentZoomIdx >= zoomModes.length) currentZoomIdx = 0;
 }
 
 window.nextLevel = function () {
@@ -904,7 +910,9 @@ function draw() {
     const viewWidth = canvas.width / 2;
 
     //zoom logic
-    let targetZoom = (zoomTimer > 0) ? 0.6 : 1.0;
+    let baseZoom = zoomModes[currentZoomIdx];
+    let targetZoom = (zoomTimer > 0) ? 0.6 : baseZoom;
+
     zoomLevel += (targetZoom - zoomLevel) * 0.05;
 
     //camera logic for x-axis horizontal(left-right)
