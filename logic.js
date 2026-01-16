@@ -63,12 +63,26 @@ let zoomLevel = 1.0;
 let zoomTimer = 0;
 let zoomModes = [1.0, 0.7, 0.5]; //0.5 for huge area and 1.0, 0.7 for like more 
 let currentZoomIdx = 0;
+let isPaused = false;
 let lasersActive = true;
 let laserTimer = 0;
 let isBurned = false;
 
 //input
 let keys = { right: false, left: false, up: false };
+
+function checkPauseState(){
+    const pauseIDs = ['instructionOverlay', 'featuresOverlay', 'levelsOverlay'];
+    let anyOpen = false;
+
+    pauseIDs.forEach(id => {
+        const el = document.getElementById(id);
+        if(el && !el.classList.contains('hidden')){
+            anyOpen = true;
+        }
+    });
+    isPaused = anyOpen;
+}
 
 window.toggleUI = function (elementId) {
     const el = document.getElementById(elementId);
@@ -77,12 +91,16 @@ window.toggleUI = function (elementId) {
             updateLevelMenu();
         }
         el.classList.toggle('hidden');
+
+        //pause state instantly
+        checkPauseState();
     }
 };
 
 window.startGame = function () {
     gameStarted = true;
     document.getElementById('startScreen').classList.add('hidden');
+    isPaused = false;
     resetGame();
 }
 
@@ -1078,10 +1096,8 @@ function drawGrid(offsetX) {
 }
 
 function update() {
-    if (gameOver) {
-        zoomLevel += (1.0 - zoomLevel) * 0.1;
-        if (deathShake <= 0) return;
-    }
+    if (gameOver && deathShake <= 0) return; //stop everything if the game is over or pused due to overlays
+    if(isPaused) return;
 
     if (zoomTimer > 0) {
         zoomTimer--;

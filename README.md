@@ -32,6 +32,9 @@ https://github.com/user-attachments/assets/e05de37d-ab0f-4069-be87-24d9b2ca49e2
 * **These are the spring which make character jump higher than the normal one**
 * **Denoted by J**
 
+**Added Scope**
+* **Now you can Zoom in and Zoom out the game canvas upto 0.5x**
+
 ## Controls
 ```bash
   ↑(jump), →(forward), ←(backward).
