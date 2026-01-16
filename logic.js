@@ -227,7 +227,7 @@ class Player {
 
         //check for new obstacles
         checkButtonCollision(this);
-        checkDroneCollision(this);
+        if(checkDroneCollision(this)) triggerDeathSequence(false);
         checkSpringCollision(this);
         checkCrumbleLogic(this);
     }
@@ -430,14 +430,52 @@ class CrumblingBlock {
     }
 }
 
+class Bullet {
+    constructor(x, y, targetX, targetY){
+        this.x = x;
+        this.y = y;
+        this.w = 8;
+        this.h = 8;
+        this.speed = 5;
+
+        //this will now calculate the direction towards player.
+        const dx = targetX - x;
+        const dy = targetY - y;
+        const dist = Math.hypot(dx, dy);
+
+        this.vx = (dx / dist) * this.speed;
+        this.vy = (dy / dist) * this.speed;
+        this.active = true;
+    }
+    update(){
+        this.x += this.vx;
+        this.y += this.vy; 
+
+        if(this.y > canvas.height + 500 || this.y < -500) this.active = false;
+    }
+    draw(ctx, renderX){
+        ctx.fillStyle = '#ffff00';
+        ctx.shadowBlur = '#ffff00'
+        ctx.shadowBlur = '10'
+        ctx.beginPath();
+        ctx.arc(renderX, this.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+    }
+}
+
 class Drone {
     constructor(x, y, startX, endX) {
-        this.x = x; this.y = y;
-        this.w = 30; this.h = 30;
+        this.x = x;
+        this.y = y;
+        this.w = 50;
+        this.h = 50;
         this.startX = startX;
         this.endX = endX;
         this.dir = 1;
         this.speed = 2;
+        this.cooldown = 0;
+        this.sightRange = 450;
     }
     update() {
         this.x += this.speed * this.dir;
@@ -446,12 +484,20 @@ class Drone {
             this.dir = -1;
         }
         if (this.x < this.startX) {
-            this.startX;
+            this.x = this.startX;
             this.dir = 1;
         }
+        const dist = Math.hypot(player.x - this.x, player.y - this.y);
+        if(dist < this.sightRange){
+            if(this.cooldown <= 0){
+                bullets.push(new Bullet(this.x + 15, this.y + 15, player.x + 18, player.y + 18));
+                this.cooldown = 80;
+            }
+        }
+        if(this.cooldown > 0) this.cooldown--;
     }
     draw(ctx, renderX) {
-        if (renderX < -50 || renderX > canvas.width / 2 + 50) return;
+        if (renderX < -50 || renderX > canvas.width + 50) return;
 
         const floatY = Math.sin(Date.now() / 150) * 5;
         if (droneImg.complete && droneImg.naturalWidth !== 0) {
@@ -535,7 +581,31 @@ const LEVEL_5 = [
     "........................................................333333333...................3333333333.................."
 ];
 
-const LEVELS = [LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_5];
+const LEVEL_6 = [
+    "................................................................................................................",
+    "................................................................................................................",
+    "33333333333.......3333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333",
+    ".....D.................................D........................................................................",
+    "...................................333333333.......................D............................................",
+    "...................................3.......3....................3333333.........................................",
+    "S..................................3.......3....................3.....3......................................G..",
+    "3333333CCC3........33333333333333333.......3333333333333333333333.....333333333333333333333333333333333333333333",
+    "...................3............................................................................................",
+    "...................3............................................................................................"
+];
+
+const LEVEL_7 = [
+    "................................................................................................................",
+    "................................................................................................................",
+    "........33333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333",
+    "S...............................................................................................................",
+    "3333333............3333.........................................................................................",
+    ".......C...C...C.......",
+    "",
+    ""
+]
+
+const LEVELS = [LEVEL_1, LEVEL_2, LEVEL_3, LEVEL_4, LEVEL_5, LEVEL_6, LEVEL_7];
 const player = new Player();
 const lever = new Lever(0, 0);
 let pastPlatforms = [];
@@ -546,6 +616,7 @@ let buttons = [];
 let springs = [];
 let crumbles = [];
 let drones = [];
+let bullets = [];
 let goalRect = { x: 0, y: 0, w: 40, h: 40 };
 
 function buildLevel() {
@@ -559,6 +630,7 @@ function buildLevel() {
     springs = [];
     crumbles = [];
     drones = [];
+    bullets = [];
 
     lever.x = -1000;
     lever.y = -1000;
@@ -619,8 +691,8 @@ function buildLevel() {
             if (char === 'C') {
                 crumbles.push(new CrumblingBlock(px, py));
             }
-            if (char === 'D') {
-                drones.push(new Drone(px, py, px - 120, px + 120));
+            if (char === 'D') { //drone to be changed like moving in the certain area (i.e 300px) 
+                drones.push(new Drone(px, py - 40, px - 120, px + 120));
             }
 
         }
@@ -885,6 +957,7 @@ function draw() {
     crumbles.forEach(c => c.draw(ctx, c.x - cameraX + viewWidth, false));
     springs.forEach(s => s.draw(ctx, s.x - cameraX + viewWidth, false));
     drones.forEach(d => d.draw(ctx, d.x - cameraX + viewWidth));
+    bullets.forEach(b => b.draw(ctx, b.x - cameraX + viewWidth));
 
     spikes.forEach(s => s.draw(ctx, s.x - cameraX + viewWidth));
     lasers.forEach(l => l.draw(ctx, l.x - cameraX + viewWidth));
@@ -965,9 +1038,20 @@ function update() {
     player.update();
     crumbles.forEach(c => c.update());
     drones.forEach(d => d.update());
-    for (let i = rippleEvents.length - 1; i >= 0; i--) {
+
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        let b = bullets[i];
+        b.update();
+
+        if(rectIntersect(player.x, player.y, player.w, player.h, b.x, b.y, b.w, b.h)){
+            triggerDeathSequence(false);
+        }
+        if(!b.active) bullets.splice(i, 1);
+    }
+
+    for(let i = rippleEvents.length - 1; i >= 0; i--){
         rippleEvents[i].timer--;
-        if (rippleEvents[i].timer <= 0) {
+        if(rippleEvents[i].timer <= 0){
             rippleEvents[i].execute();
             rippleEvents.splice(i, 1);
         }
