@@ -227,7 +227,7 @@ class Player {
 
         //check for new obstacles
         checkButtonCollision(this);
-        if(checkDroneCollision(this)) triggerDeathSequence(false);
+        if (checkDroneCollision(this)) triggerDeathSequence(false);
         checkSpringCollision(this);
         checkCrumbleLogic(this);
     }
@@ -405,7 +405,7 @@ class CrumblingBlock {
 
         ctx.save();
         ctx.translate(shakeX, 0);
-        if(isPast){
+        if (isPast) {
             ctx.fillStyle = COLORS.pastPlat;
             ctx.strokeStyle = COLORS.pastBorder;
         } else {
@@ -430,8 +430,47 @@ class CrumblingBlock {
     }
 }
 
+class Particles {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.w = Math.random() * 6 + 2;
+        this.h = this.w;
+        this.color = color;
+
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 5 + 2;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        this.life = 1.0;
+        this.decay = Math.random() * 0.05 + 0.02;
+    }
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += 0.2;
+        this.life -= this.decay;
+    }
+    draw(ctx, renderX) {
+        ctx.save();
+        ctx.globalAlpha = this.life;
+        ctx.fillStyle = this.color;
+        ctx.fillRect(renderX, this.y, this.w, this.h);
+        ctx.restore();
+    }
+}
+
+function createDeathParticles(x, y) {
+    for (let i = 0; i < 20; i++) {
+        particles.push(new Particles(x, y, '#ff0000'));
+    }
+    for (let i = 0; i < 10; i++) {
+        particles.push(new Particles(x, y, '#ffffff'));
+    }
+}
+
 class Bullet {
-    constructor(x, y, targetX, targetY){
+    constructor(x, y, targetX, targetY) {
         this.x = x;
         this.y = y;
         this.w = 8;
@@ -447,13 +486,13 @@ class Bullet {
         this.vy = (dy / dist) * this.speed;
         this.active = true;
     }
-    update(){
+    update() {
         this.x += this.vx;
-        this.y += this.vy; 
+        this.y += this.vy;
 
-        if(this.y > canvas.height + 500 || this.y < -500) this.active = false;
+        if (this.y > canvas.height + 500 || this.y < -500) this.active = false;
     }
-    draw(ctx, renderX){
+    draw(ctx, renderX) {
         ctx.fillStyle = '#ffff00';
         ctx.shadowBlur = '#ffff00'
         ctx.shadowBlur = '10'
@@ -488,16 +527,16 @@ class Drone {
             this.dir = 1;
         }
         const dist = Math.hypot(player.x - this.x, player.y - this.y);
-        if(dist < this.sightRange){
-            if(this.cooldown <= 0){
+        if (dist < this.sightRange) {
+            if (this.cooldown <= 0) {
                 bullets.push(new Bullet(this.x + 15, this.y + 15, player.x + 18, player.y + 18));
                 this.cooldown = 80;
             }
         }
-        if(this.cooldown > 0) this.cooldown--;
+        if (this.cooldown > 0) this.cooldown--;
     }
     draw(ctx, renderX) {
-        if (renderX < -50 || renderX > canvas.width + 50) return;
+        if (renderX < -50 || renderX > canvas.width + 2000) return;
 
         const floatY = Math.sin(Date.now() / 150) * 5;
         if (droneImg.complete && droneImg.naturalWidth !== 0) {
@@ -617,6 +656,7 @@ let springs = [];
 let crumbles = [];
 let drones = [];
 let bullets = [];
+let particles = [];
 let goalRect = { x: 0, y: 0, w: 40, h: 40 };
 
 function buildLevel() {
@@ -732,7 +772,7 @@ function checkButtonCollision(p) {
     }
 }
 function checkSpringCollision(p) {
-    const pHitbox = {x: p.x, y: p.y, w: p.w, h: p.h};
+    const pHitbox = { x: p.x, y: p.y, w: p.w, h: p.h };
     for (let s of springs) {
         if (rectIntersect(pHitbox.x, pHitbox.y, pHitbox.w, pHitbox.h, s.x, s.y, s.w, s.h)) {
             if (p.vy >= 0) {
@@ -793,9 +833,11 @@ function attemptInteract() {
 
 function triggerDeathSequence(burned) {
     if (gameOver) return;
+    createDeathParticles(player.x + player.w / 2, player.y + player.h / 2); //explosion at the player center
     gameOver = true;
     player.dead = true;
     deathShake = 20;
+    zoomTimer = 0;
     isBurned = burned;
     deathSound.currentTime = 0;
     deathSound.play().catch(e => console.log("Sound error:", e));
@@ -869,7 +911,7 @@ function draw() {
 
     //now adding the camera login for y-axis
     let targetCamY = player.y - (canvas.height * 0.6);
-    if(targetCamY > 0) targetCamY = 0;
+    if (targetCamY > 0) targetCamY = 0;
     cameraY = targetCamY;
 
     //shaking of sreen
@@ -892,9 +934,9 @@ function draw() {
     drawGrid(0);
 
     ctx.save();
-    ctx.translate(viewWidth/2, canvas.height/2);
+    ctx.translate(viewWidth / 2, canvas.height / 2);
     ctx.scale(zoomLevel, zoomLevel);
-    ctx.translate(-viewWidth/2, -canvas.height/2);
+    ctx.translate(-viewWidth / 2, -canvas.height / 2);
     ctx.translate(0, -cameraY);//y-axis camera for objects
 
     ctx.fillStyle = COLORS.pastPlat;
@@ -902,7 +944,7 @@ function draw() {
     ctx.lineWidth = 2;
     pastPlatforms.forEach(p => {
         let rx = p.x - cameraX;
-        if (rx > -200 && rx < viewWidth/zoomLevel) drawBlock(ctx, rx, p.y, p.w, p.h, CORNER_RADIUS);
+        if (rx > -200 && rx < viewWidth / zoomLevel) drawBlock(ctx, rx, p.y, p.w, p.h, CORNER_RADIUS);
     });
     crumbles.forEach(c => c.draw(ctx, c.x - cameraX, true));
     springs.forEach(s => s.draw(ctx, s.x - cameraX, true));
@@ -926,6 +968,7 @@ function draw() {
         }
     });
     lever.draw(ctx, lever.x - cameraX);
+    particles.forEach(p => p.draw(ctx, p.x - cameraX));
     drawPlayer(ctx, player.x - cameraX, player.y, 1);
 
     ctx.restore();//v-camera for past
@@ -942,9 +985,9 @@ function draw() {
     drawGrid(viewWidth);
 
     ctx.save();
-    ctx.translate(viewWidth + viewWidth/2, canvas.height/2);
+    ctx.translate(viewWidth + viewWidth / 2, canvas.height / 2);
     ctx.scale(zoomLevel, zoomLevel);
-    ctx.translate(-(viewWidth + viewWidth/2), -canvas.height/2);
+    ctx.translate(-(viewWidth + viewWidth / 2), -canvas.height / 2);
     ctx.translate(0, -cameraY);
 
     ctx.fillStyle = COLORS.presentPlat;
@@ -962,6 +1005,7 @@ function draw() {
     spikes.forEach(s => s.draw(ctx, s.x - cameraX + viewWidth));
     lasers.forEach(l => l.draw(ctx, l.x - cameraX + viewWidth));
 
+    particles.forEach(p => p.draw(ctx, p.x - cameraX + viewWidth));
     drawPlayer(ctx, player.x - cameraX + viewWidth, player.y, 0.5);
 
     let goalRX = goalRect.x - cameraX + viewWidth;
@@ -1022,9 +1066,12 @@ function drawGrid(offsetX) {
 }
 
 function update() {
-    if (gameOver && deathShake <= 0) return;
+    if (gameOver) {
+        zoomLevel += (1.0 - zoomLevel) * 0.1;
+        if (deathShake <= 0) return;
+    }
 
-    if(zoomTimer > 0){
+    if (zoomTimer > 0) {
         zoomTimer--;
     }
 
@@ -1043,18 +1090,24 @@ function update() {
         let b = bullets[i];
         b.update();
 
-        if(rectIntersect(player.x, player.y, player.w, player.h, b.x, b.y, b.w, b.h)){
+        if (rectIntersect(player.x, player.y, player.w, player.h, b.x, b.y, b.w, b.h)) {
             triggerDeathSequence(false);
         }
-        if(!b.active) bullets.splice(i, 1);
+        if (!b.active) bullets.splice(i, 1);
     }
 
-    for(let i = rippleEvents.length - 1; i >= 0; i--){
+    for (let i = rippleEvents.length - 1; i >= 0; i--) {
         rippleEvents[i].timer--;
-        if(rippleEvents[i].timer <= 0){
+        if (rippleEvents[i].timer <= 0) {
             rippleEvents[i].execute();
             rippleEvents.splice(i, 1);
         }
+    }
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.update();
+        if (p.life <= 0) particles.splice(i, 1);
     }
 }
 
@@ -1068,10 +1121,18 @@ function resetGame() {
     if (animationId) cancelAnimationFrame(animationId);
     keys = { right: false, left: false, up: false };
     player.reset();
+
+    zoomLevel = 1.0;
+    zoomTimer = 0;
+    cameraX = 0;
+    cameraY = 0;
+
     lever.active = false;
     victoryMode = false;
     deathShake = 0;
     rippleEvents = [];
+    particles = [];
+    bullets = [];
     buildLevel();
     gameOver = false;
     document.getElementById('gameEndOverlay').classList.add('hidden');
